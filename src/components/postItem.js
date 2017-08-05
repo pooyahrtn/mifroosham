@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import {StyleSheet, View, Image, TouchableNativeFeedback, Platform, Dimensions} from 'react-native';
-import { Card, Text, Body , Right, Thumbnail} from 'native-base';
-import { Icon, Button, Divider } from 'react-native-elements';
+import {StyleSheet,Text, View, Image, TouchableNativeFeedback,TouchableWithoutFeedback, Platform, Dimensions} from 'react-native';
+import { Card, Thumbnail} from 'native-base';
+import { Icon, Button } from 'react-native-elements';
 import {EnglighNumberToPersian, EnglishNumberToPersianPrice} from '../utility/NumberUtils.js';
 import ParsedText from 'react-native-parsed-text';
 import {phonecall} from 'react-native-communications'
@@ -24,19 +24,16 @@ export default class CardHeaderFooterExample extends Component {
   constructor(props) {
     super(props);
     if (this.props.type === 2) {
-      this.state = {auction_remaining_time: getRemainingTimeText(this.props.auction.end_time)
-      };
+      this.state = {auction_remaining_time: ''}
     }else if (this.props.type === 1) {
-      this.state = {discound_current_price: getCurrentPrice(this.props.discount.start_time, this.props.discount.end_time,
-        this.props.discount.real_price, this.props.discount.start_price)};
+      this.state = {discound_current_price: ''};
     }
 
 }
 
 componentDidMount(){
   if (this.props.type === 2) {
-    // this.state = {auction_remaining_time: getRemainingTimeText(this.props.auction.end_time)
-    // };
+
     intervalId = setInterval(() => {
       this.setState((prevState, props) => {
       return {auction_remaining_time: getRemainingTimeText(this.props.auction.end_time)};
@@ -80,22 +77,24 @@ componentWillUnmount(){
     }
     return (
       <Card>
-        <View style={styles.cardItemRow}>
-            <View style={{flexDirection: 'row', alignItems: 'center',flex:1,justifyContent:'flex-end' }}>
-              {this.props.is_share &&
-                <View style={{flexDirection: 'row', alignItems: 'center' }}>
-                  <Text style= {styles.nameText}>{this.props.source_post.sender.full_name}</Text>
-                  <Thumbnail small source={{uri: this.props.source_post.sender.avatar_url}}/>
-                  <Icon name='retweet'  type='evilicon' color='#444444'/>
-                </View>
 
-              }
-
-              <Text onPress={()=> {this.props.openProfilePage(this.props.sender.id)}} style= {styles.nameText}>{this.props.sender.full_name}</Text>
-              <Thumbnail small onPress={()=> {this.props.openProfilePage(this.props.sender.id)}} source={{uri: this.props.sender.avatar_url}}/>
+        <View style={{flexDirection: 'row', padding: 3,flex:1,justifyContent:'flex-end' }}>
+          {this.props.is_share &&
+            <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.source_posts.sender.id)}} >
+              <View style={{flexDirection: 'row', alignItems: 'center' }}>
+                <Text style= {styles.nameText}>{this.props.source_post.sender.full_name}</Text>
+                <Thumbnail small source={{uri: this.props.source_post.sender.avatar_url}}/>
+                <Icon name='retweet'  type='evilicon' color='#444444'/>
+              </View>
+            </TouchableWithoutFeedback>
+          }
+          <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.sender.id)}} >
+            <View style={{flexDirection:'row', alignItems: 'center'}}>
+              <Text style= {styles.nameText}>{this.props.sender.full_name}</Text>
+              <Thumbnail small  source={{uri: this.props.sender.avatar_url}}/>
             </View>
+          </TouchableWithoutFeedback>
         </View>
-        <Divider style={{ backgroundColor: '#eeeeee', margin:2 }} />
         <Image source={{uri: this.props.image_url}}
           style={{width: null , height: Dimensions.get('window').width * this.props.image_height_to_width_ratio,flex : 1, resizeMode:'contain'}}/>
         <View style={styles.cardItemRow}>
@@ -138,7 +137,7 @@ componentWillUnmount(){
             onPress={()=>{}}
             background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
             <View style={styles.button}>
-              {this.props.type === 1 ?
+              {this.props.type === 9 ?
                 <Text style={styles.priceText} >{EnglishNumberToPersianPrice(this.state.discound_current_price)} تومان</Text>
                 :
                 <Text style={styles.priceText} >{EnglishNumberToPersianPrice(this.props.price)} تومان</Text>
@@ -161,13 +160,13 @@ componentWillUnmount(){
             <TouchableNativeFeedback
               onPress={()=>{}}
               background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
+
               <View style={this.state.auction_remaining_time.enabled?styles.auctionBuyButton:styles.auctionBuyButtonDisabled}>
                 <Text style={styles.priceText} >بالاترین پیشنهاد {EnglishNumberToPersianPrice(this.props.auction.highest_suggest)} تومان</Text>
                 <Icon type='evilicon'  name='arrow-up' color='#ffffff' size={28}/>
               </View>
             </TouchableNativeFeedback>
           </View>
-
         }
         </View>
      </Card>

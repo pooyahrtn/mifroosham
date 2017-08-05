@@ -13,16 +13,15 @@ export default class Main extends Component{
 
   constructor(props){
     super(props);
-    this.state = {sampleFeed:[]}
+    this.state = {sampleFeed:null};
   }
 
-  componentWillMount(){
+  componentDidMount(){
     this.setState({sampleFeed : sampleData})
   }
 
   openProfilePage(user_id){
     this.props.userSelected(user_id);
-
   }
 
   render(){
@@ -35,6 +34,7 @@ export default class Main extends Component{
         renderItem={({item}) =>
           <PostItem
             {...item}
+            openProfilePage = {this.props.openProfilePage}
           />
 
         }/>

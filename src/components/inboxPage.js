@@ -9,7 +9,7 @@ import DeliverItem from './deliverItem.js'
 import {getPendingNotifications, getPendingNotificationsThunk} from '../actions/index';
 
  class InboxPage extends Component {
-  componentWillMount(){
+  componentDidMount(){
     this.props.getPendingNotificationsThunk();
   }
   constructor(props){

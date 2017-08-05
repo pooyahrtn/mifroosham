@@ -6,7 +6,7 @@ import HistoryItem from './historyItem.js'
 import {getRecentHistoryThunk} from '../actions/index';
 
 class HistoryPage extends Component {
- componentWillMount(){
+ componentDidMount(){
    this.props.getRecentHistoryThunk();
  }
  constructor(props){

@@ -51,7 +51,10 @@ class Root extends Component{
           </View>
         </Header>
         <Content>
-          <CurrentPage currentTab={this.state.currentTab}/>
+          <CurrentPage currentTab={this.state.currentTab} openProfilePage={(user_id)=>{
+            this.props.userSelected(user_id);
+            Actions.profilePage()
+          }}/>
         </Content>
         <Footer>
           <FooterTab style={{backgroundColor: '#ffffff'}}>
@@ -100,7 +103,9 @@ function TabButtonColor(thisButtonIndex, selectedTab){
 function CurrentPage(props){
   const tabNumber = props.currentTab;
   if (tabNumber == 0) {
-    return <Main/>;
+    return <Main
+      openProfilePage ={props.openProfilePage}
+      />;
   }
   else if (tabNumber == 3) {
     return <HistoryPage/>;

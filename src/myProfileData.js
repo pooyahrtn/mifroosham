@@ -47,6 +47,7 @@ export const matin = {
   followings_count: 422,
   followers_count: 140,
   itIsMe: false,
+  following: true,
   bio: 'مهندس عمران علم و صنعت، رنک چهار. ۳ بودم ولی ترافیک برداشتم رید تو معدلم.',
   phone_number:'09129994444',
   posts:[
@@ -76,6 +77,7 @@ export const kia = {
   followings_count: 42,
   followers_count: 14000000,
   itIsMe: false,
+  following: false,
   bio: 'گالری کیا حتی روز های تعطیل',
   posts:[
     {
@@ -110,6 +112,7 @@ export const bahram = {
   followings_count: 42,
   followers_count: 19000000,
   itIsMe: false,
+  following: true,
   bio: '',
   posts:[
     {

@@ -10,12 +10,15 @@ import {phonecall} from 'react-native-communications'
 
 
 class ProfilePage extends Component {
- componentWillMount(){
+ componentDidMount(){
    this.props.getUserThunk(this.props.activeUser);
  }
  constructor(props){
    super(props);
  }
+
+
+
  render(){
    return(
      <View>
@@ -33,12 +36,7 @@ class ProfilePage extends Component {
                   <Text>دیده کردن</Text>
                 </View>
               </View>
-              <TouchableWithoutFeedback  onPress={()=>{}}>
-                <View style={styles.settingButton}>
-                  <Text style={{color:'#ffffff'}} > تنظیمات</Text>
-                  <Icon name='settings' color='#ffffff'/>
-                </View>
-              </TouchableWithoutFeedback>
+              <SettingOrFollowButton following={this.props.userInfo.following} itIsMe={this.props.userInfo.itIsMe}/>
             </View>
             <View style={{flex:1, alignItems:"flex-end"}}>
               <Thumbnail large source={{uri: this.props.userInfo.avatar_url}}/>
@@ -80,24 +78,47 @@ class ProfilePage extends Component {
          numColumns = {3}
          keyExtractor={item => item.id}
          renderItem={({item}) =>
-           <View style={{
-           width:getPostWidth(),
-           height:getPostWidth(),
-           maxWidth: getPostWidth(),
-           padding:1,
-           margin:2,
-           backgroundColor:'#fff',
-           borderRadius:2,
-           borderColor:'#BDBDBD',
-           borderWidth:0.5
-           }}>
-             <Image resizeMode='cover' style={{width:getPostWidth()-2, height:getPostWidth()-2}} source={{uri: item.image_url}}/>
-           </View>
+
+             <Image style={{width:getPostWidth(), height:getPostWidth() , borderRadius:2 , margin: 2, borderColor:'#E0E0E0', borderWidth:1}} source={{uri: item.image_url}}/>
+
          }/>
       }
      </View>
    )
  }
+}
+
+function SettingOrFollowButton(props){
+  let itIsMe = props.itIsMe;
+  let following = props.following;
+  if (itIsMe) {
+    return(
+      <TouchableWithoutFeedback  onPress={()=>{}}>
+        <View style={styles.settingButton}>
+          <Text style={{color:'#ffffff'}} > تنظیمات</Text>
+          <Icon name='settings' color='#ffffff'/>
+        </View>
+      </TouchableWithoutFeedback>
+    );
+  }else if (following) {
+    return(
+      <TouchableWithoutFeedback  onPress={()=>{}}>
+        <View style={styles.followingButton}>
+          <Text style={{color:'#ffffff'}} > دنبال میکنم</Text>
+          <Icon name='person-outline' color='#ffffff'/>
+        </View>
+      </TouchableWithoutFeedback>
+    );
+  }else {
+    return(
+      <TouchableWithoutFeedback  onPress={()=>{}}>
+        <View style={styles.followButton}>
+          <Text style={{color:'#ffffff'}} > دنبال کن</Text>
+          <Icon name='person-add' color='#ffffff'/>
+        </View>
+      </TouchableWithoutFeedback>
+    );
+  }
 }
 
 function getPostWidth(){
@@ -122,6 +143,24 @@ const styles = StyleSheet.create({
   },
   settingButton:{
     backgroundColor:'#37474F',
+    flexDirection:'row',
+    margin: 2,
+    padding:4,
+    alignItems: 'center',
+    borderRadius: 5,
+    justifyContent: 'center',
+  },
+  followingButton:{
+    backgroundColor:'#009688',
+    flexDirection:'row',
+    margin: 2,
+    padding:4,
+    alignItems: 'center',
+    borderRadius: 5,
+    justifyContent: 'center',
+  },
+  followButton:{
+    backgroundColor:'#D32F2F',
     flexDirection:'row',
     margin: 2,
     padding:4,
