@@ -57,7 +57,7 @@ export const sampleData = [
     "type": 2,
     "auction": {
       "highest_suggest": 350000000,
-      "end_time" : 1501914468,
+      "end_time" : 1504914468,
     },
 
     "likes_count": 78785,
@@ -82,8 +82,8 @@ export const sampleData = [
     "type": 1,
     "discount" :{
       "start_price": 4123220,
-      "real_price": 4600000,
-      "end_time": 1501934468,
+      "real_price": 4900000,
+      "end_time": 1502934468,
       "start_time": 1501270118,
     },
     "ads_included": false,

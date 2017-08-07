@@ -137,7 +137,7 @@ componentWillUnmount(){
             onPress={()=>{}}
             background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
             <View style={styles.button}>
-              {this.props.type === 9 ?
+              {this.props.type === 1 ?
                 <Text style={styles.priceText} >{EnglishNumberToPersianPrice(this.state.discound_current_price)} تومان</Text>
                 :
                 <Text style={styles.priceText} >{EnglishNumberToPersianPrice(this.props.price)} تومان</Text>
