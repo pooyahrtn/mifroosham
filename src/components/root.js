@@ -68,7 +68,7 @@ class Root extends Component{
               <Icon name="stars" color={TabButtonColor(1,this.state.currentTab)} size={28}/>
 
             </Button>
-            <Button vertical>
+            <Button vertical onPress={()=>{Actions.takePhotoPage()}}>
               <Icon name="add-circle-outline" color='#9E9E9E' size={28}/>
 
             </Button>

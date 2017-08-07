@@ -166,6 +166,13 @@ export function userSelected(user_id){
   }
 }
 
+export function capturedImagePath(image_path){
+  return{
+    type: 'Captured_Image_Path',
+    payload: image_path
+  }
+}
+
 export function tabSelected(tab){
   return{
     type: 'Tab_Selected',

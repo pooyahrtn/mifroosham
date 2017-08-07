@@ -6,6 +6,8 @@ import Root from './components/root.js';
 import RepoList from './components/repolist.js';
 import InboxPage from './components/inboxPage.js';
 import ProfilePageWithHeader from './components/profilePageWithHeader.js';
+import TakePhotoPage from './components/takePhotoPage.js';
+import NewPostPage from './components/newPostPage.js';
 
 
 export default class App extends Component{
@@ -16,6 +18,8 @@ export default class App extends Component{
           <Scene key="frame" component={Root} initial={true}/>
           <Scene key="inbox" title="inbox" component={InboxPage}/>
           <Scene key="profilePage" component={ProfilePageWithHeader}/>
+          <Scene key="takePhotoPage" component={TakePhotoPage}/>
+          <Scene key="newPostPage" component={NewPostPage} />
         </Scene>
       </Router>
     );
