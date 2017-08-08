@@ -7,6 +7,7 @@ import {getUserThunk} from '../actions/index';
 import { Icon } from 'react-native-elements';
 import {countText, EnglishNumberToPersianPrice} from '../utility/NumberUtils.js';
 import {phonecall} from 'react-native-communications'
+import ImagePicker from 'react-native-image-crop-picker';
 
 
 class ProfilePage extends Component {
@@ -38,10 +39,22 @@ class ProfilePage extends Component {
               </View>
               <SettingOrFollowButton following={this.props.userInfo.following} itIsMe={this.props.userInfo.itIsMe}/>
             </View>
-            <View style={{flex:1, alignItems:"flex-end"}}>
-              <Thumbnail large source={{uri: this.props.userInfo.avatar_url}}/>
-              <Text style={{padding:5, fontWeight:'bold', flex:1}}>{this.props.userInfo.full_name}</Text>
-            </View>
+            <TouchableWithoutFeedback onPress={()=>{
+              ImagePicker.openPicker({
+                width: 300,
+                height: 300,
+                cropperCircleOverlay : true,
+                cropping: true
+              }).then(image => {
+                
+              });
+            }}>
+              <View style={{flex:1, alignItems:"flex-end"}}>
+                <Thumbnail large source={{uri: this.props.userInfo.avatar_url}}/>
+                <Text style={{padding:5, fontWeight:'bold', flex:1}}>{this.props.userInfo.full_name}</Text>
+              </View>
+            </TouchableWithoutFeedback>
+
           </View>
           <Text style={{fontSize: 12, padding:5}}>{this.props.userInfo.bio}</Text>
           {this.props.userInfo.itIsMe &&

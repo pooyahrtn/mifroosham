@@ -8,6 +8,8 @@ import {bindActionCreators} from 'redux';
 import { Actions } from 'react-native-router-flux';
 import {capturedImagePath} from '../actions/index.js';
 import Camera from 'react-native-camera';
+import ImagePicker from 'react-native-image-crop-picker';
+
 
  class TakePhotoPage extends Component {
 
@@ -49,20 +51,40 @@ import Camera from 'react-native-camera';
              playSoundOnCapture={false}
              style={styles.cameraPreview}
              aspect={Camera.constants.Aspect.fill}>
-         </Camera>
-         <View style={{flex:1,alignItems:'center', justifyContent:'center'}}>
-          {this.state.loading?(
-            <Spinner color='red' />
-          ):
-            (<TouchableWithoutFeedback onPress= {()=>{
-              this.setState({loading:true});
-             this.takePicture();
-            }}>
-             <View style={styles.cameraBackCircle}>
-                <Icon name='add-a-photo' color='#000000' size={40}/>
-             </View>
+           </Camera>
+           <View style={{flex:1,flexDirection:'row',alignItems:'center', justifyContent:'center'}}>
+            <View>
+            {this.state.loading?(
+              <View style={styles.cameraBackCircle}>
+                 <Spinner />
+              </View>
 
-             </TouchableWithoutFeedback>)}
+            ):
+              (<TouchableWithoutFeedback onPress= {()=>{
+                this.setState({loading:true});
+               this.takePicture();
+              }}>
+               <View style={styles.cameraBackCircle}>
+                  <Icon name='add-a-photo' color='#000000' size={40}/>
+               </View>
+
+               </TouchableWithoutFeedback>)}
+          </View>
+          <TouchableWithoutFeedback onPress= {()=>{
+            ImagePicker.openPicker({
+              width: 300,
+              height: 300,
+              cropping: true
+            }).then(image => {
+              this.props.capturedImagePath(image.path);
+              Actions.newPostPage();
+            });
+          }}>
+           <View style={styles.cameraBackCircle}>
+              <Icon name='photo' color='#000000' size={40}/>
+           </View>
+
+           </TouchableWithoutFeedback>
 
          </View>
         </View>
@@ -84,7 +106,8 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     alignItems:'center',
     justifyContent:'center',
-    backgroundColor:'#E0E0E0'
+    margin: 10,
+    backgroundColor:'#CFD8DC'
   }
 })
 
