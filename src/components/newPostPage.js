@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
-import {View, FlatList, StyleSheet, Image, Dimensions, Text, TouchableWithoutFeedback} from 'react-native';
+import {View, FlatList, StyleSheet, Image, Dimensions, Text, TouchableWithoutFeedback, TextInput} from 'react-native';
 import { Icon, ButtonGroup} from 'react-native-elements';
-import { Container,Button ,Content, Header, Body, Title, Card,Item, Input, Label} from 'native-base';
+import { Container,Button ,Content, Header,Footer, Title, Card,Item, Input, Label} from 'native-base';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import { Actions } from 'react-native-router-flux';
@@ -18,7 +18,10 @@ class NewPostPage extends Component {
       selectedIndex: 2,
       priceText : 'قیمت',
       price: 0,
-      auction_end_time : 24,
+      end_price: 0,
+      end_time : 24,
+      chariety : false,
+      description: '',
     }
     // WHY?!?!
     this.updateIndex = this.updateIndex.bind(this)
@@ -62,6 +65,12 @@ class NewPostPage extends Component {
           </View>
         </Card>
         <Card>
+          <TextInput style={{flex:1, margin: 5}} multiline={true} numberOfLines = {4}
+            maxLength={350} onChangeText={(text) => this.setState({description: text})}
+            placeholder='توضیحات... از # برای دسته بندی استفاده کنید. مثلا #کتاب'
+          />
+        </Card>
+        <Card>
           <ButtonGroup
             onPress={this.updateIndex}
             selectedIndex={this.state.selectedIndex}
@@ -70,36 +79,52 @@ class NewPostPage extends Component {
             textStyle={{fontWeight:'bold'}}
             selectedTextStyle={{color:'#ffffff'}}
             containerStyle={{height: 40}} />
-            <View style={{padding:3, flexDirection:'row', alignItems:'flex-end'}}>
-              <Text style={{margin:5}}>تومان</Text>
-              <Item floatingLabel style={{ flex:1}}>
-                <Label>{this.state.priceText}</Label>
-                <Input keyboardType='numeric' onChangeText={(text) => this.setState({price: text})}/>
-              </Item>
-              <Icon style={{margin:5}} name='credit-card'/>
-            </View>
-            {this.state.selectedIndex === 0 && (<View style={{padding:9, flexDirection:'row', alignItems:'center'}}>
-              <TouchableWithoutFeedback onPress={()=>{this.setState({auction_end_time: this.state.auction_end_time - 1})}}>
+            <PriceMode mode={this.state.selectedIndex} setState={this.setState}/>
+            {(this.state.selectedIndex === 0 || this.state.selectedIndex === 1)&& (<View style={{padding:9, flexDirection:'row', alignItems:'center'}}>
+              <TouchableWithoutFeedback onPress={()=>{this.setState({end_time: this.state.end_time - 1})}}>
                 <View>
                   <Icon style={{margin:8}} name='keyboard-arrow-down' />
                 </View>
               </TouchableWithoutFeedback>
-              <TouchableWithoutFeedback onPress={()=>{this.setState({auction_end_time: this.state.auction_end_time + 1})}}>
+              <TouchableWithoutFeedback onPress={()=>{this.setState({end_time: this.state.end_time + 1})}}>
                 <View>
                   <Icon style={{margin:8}} name='keyboard-arrow-up' />
                 </View>
               </TouchableWithoutFeedback>
               <Text style={{flex:1}}>
                 <Text>زمان اتمام </Text>
-                <Text>{EnglighNumberToPersian(this.state.auction_end_time)}</Text>
+                <Text>{EnglighNumberToPersian(this.state.end_time)}</Text>
                 <Text> ساعت دیگر.</Text>
               </Text>
               <Icon type='evilicon'  name='clock'/>
             </View>
             )}
         </Card>
+        <Card>
+          <TouchableWithoutFeedback onPress={()=>{this.setState({chariety: !this.state.chariety})}}>
+            <View style={{flexDirection:'row', padding:9, alignItems:'center'}}>
+              <Image style={{width:44, height: 20}} source={{uri: 'http://www.mahak-charity.org/main/images/mahak_chareity.png'}}/>
+              <Text style={{flex:1}}>
+                <Text>به نفع خیریه محک</Text>
+                {this.state.chariety?(<Text> باشد</Text>):(<Text> نباشد</Text>)}
+              </Text>
+              {this.state.chariety?(
+                <Icon type='evilicon' color='#FF9800' name='check' size={30} />
+              ):(
+                <Icon type='evilicon'  name='close-o'size={30}/>
+              )}
+            </View>
+          </TouchableWithoutFeedback>
+        </Card>
 
         </Content>
+        <Footer style={{backgroundColor: 'transparent'}}>
+          <Button block success style={{flex:1, margin: 4}}>
+            <Text style={{color:'#ffffff', margin: 2}}>ارسال</Text>
+            <Icon color='#ffffff' name='send' />
+
+          </Button>
+        </Footer>
 
       </Container>
     )
@@ -107,10 +132,65 @@ class NewPostPage extends Component {
 }
 
 
+function PriceMode(params){
+  let mode = params.mode;
+  let setState = params.setState;
+  if (mode === 2) {
+    return(
+      <View style={styles.priceContainer}>
+        <Text style={{margin:5}}>تومان</Text>
+        <Item floatingLabel style={{ flex:1}}>
+          <Label>قیمت</Label>
+          <Input keyboardType='numeric' onChangeText={(text) => setState({price: text})}/>
+        </Item>
+        <Icon style={{margin:5}} name='credit-card'/>
+      </View>
+    )
+  }else if(mode === 1){
+    return(
+      <View>
+        <View style={styles.priceContainer}>
+          <Text style={{margin:5}}>تومان</Text>
+          <Item floatingLabel style={{ flex:1}}>
+            <Label>قیمت شروع</Label>
+            <Input keyboardType='numeric' onChangeText={(text) => setState({price: text})}/>
+          </Item>
+          <Icon style={{margin:5}} name='credit-card'/>
+        </View>
+        <View style={styles.priceContainer}>
+          <Text style={{margin:5}}>تومان</Text>
+          <Item floatingLabel style={{ flex:1}}>
+            <Label>قیمت پایان</Label>
+            <Input keyboardType='numeric' onChangeText={(text) => setState({end_price: text})}/>
+          </Item>
+          <Icon style={{margin:5}} name='credit-card'/>
+        </View>
+      </View>
+    )
+  }else {
+    return(
+       <View style={styles.priceContainer}>
+        <Text style={{margin:5}}>تومان</Text>
+        <Item floatingLabel style={{ flex:1}}>
+          <Label>قیمت پایه</Label>
+          <Input keyboardType='numeric' onChangeText={(text) => setState({price: text})}/>
+        </Item>
+        <Icon style={{margin:5}} name='credit-card'/>
+      </View>
+    )
+  }
+}
+
 const styles = StyleSheet.create({
-
+  priceContainer:{
+    padding:3,
+    flexDirection:'row',
+    alignItems:'flex-end'
+  },
+  postButton:{
+    flex:1
+  }
 })
-
 
 function mapStateToProps(state){
   return{
