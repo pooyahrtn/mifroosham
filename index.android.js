@@ -29,4 +29,4 @@
    }
  }
 
-AppRegistry.registerComponent('Mifroosham', () => NativeBaseRedux);
+AppRegistry.registerComponent('Selmino', () => NativeBaseRedux);
