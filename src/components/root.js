@@ -44,7 +44,7 @@ class Root extends Component{
              }
           </View>
           <View style= {{flexDirection:'column',alignItems: 'center',justifyContent: 'center' ,flex:2}}>
-              <Title style={{ color: '#ffffff', fontWeight:'bold'}}>میفروشم!</Title>
+              <Title style={{ color: '#ffffff', fontWeight:'bold'}}>سلمینو</Title>
           </View>
           <View style= {{flexDirection:'column',alignItems: 'flex-end',justifyContent: 'center' ,flex:1}}>
             <Icon name="search" color='#ffffff' size={31}/>

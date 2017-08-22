@@ -8,6 +8,7 @@ import InboxPage from './components/inboxPage.js';
 import ProfilePageWithHeader from './components/profilePageWithHeader.js';
 import TakePhotoPage from './components/takePhotoPage.js';
 import NewPostPage from './components/newPostPage.js';
+import Authentication from './components/authenticationPage.js';
 
 
 export default class App extends Component{
@@ -15,7 +16,13 @@ export default class App extends Component{
     return(
       <Router hideNavBar= {true}>
         <Scene key="root" hideNavBar= {true}>
-          <Scene key="frame" component={Root} initial={true}/>
+          <Scene
+             component={Authentication}
+             initial={true}
+             key='authenticationPage'
+             title='Authentication'
+           />
+          <Scene key="frame" component={Root}/>
           <Scene key="inbox" title="inbox" component={InboxPage}/>
           <Scene key="profilePage" component={ProfilePageWithHeader}/>
           <Scene key="takePhotoPage" component={TakePhotoPage}/>
