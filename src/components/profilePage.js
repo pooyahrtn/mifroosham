@@ -19,7 +19,6 @@ class ProfilePage extends Component {
  }
 
 
-
  render(){
    return(
      <View>
@@ -46,7 +45,7 @@ class ProfilePage extends Component {
                 cropperCircleOverlay : true,
                 cropping: true
               }).then(image => {
-                
+
               });
             }}>
               <View style={{flex:1, alignItems:"flex-end"}}>

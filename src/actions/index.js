@@ -179,3 +179,7 @@ export function tabSelected(tab){
     payload: tab
   }
 }
+
+export function changeConnectionState( status ){
+  return { type: 'CHANGE_CONNECTION_STATUS', payload: status };
+}

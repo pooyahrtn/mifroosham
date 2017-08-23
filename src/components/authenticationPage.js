@@ -1,9 +1,21 @@
 import React, {Component} from 'react';
-import {View, TouchableWithoutFeedback, StyleSheet, StatusBar} from 'react-native';
-import { Container,Content, Header, Body, Text,Footer ,Button, Card, Input, Item, Label} from 'native-base';
+import {View, TouchableWithoutFeedback, StyleSheet, StatusBar, AsyncStorage} from 'react-native';
+import { Container,Content, Header, Body, Text,Footer ,Button, Card, Input, Item, Label, Spinner} from 'native-base';
 import {Actions} from 'react-native-router-flux';
 import { Icon, ButtonGroup} from 'react-native-elements';
-import {sign_up_url} from '../serverAddress.js'
+import {sign_up_url, login_url} from '../serverAddress.js'
+
+async function saveToken(token, is_sign_up){
+  try {
+    AsyncStorage.setItem('@Token:key', token.toString());
+    if (is_sign_up) {
+      Actions.newProfilePage();
+    }
+  } catch (error) {
+    console.log('save_error' + error);
+  }
+}
+
 
 class Authentication extends Component {
 
@@ -23,7 +35,9 @@ class Authentication extends Component {
       username_exists : false,
       username_should_not_be_null : false,
       password_should_not_be_null : false,
-      full_name_should_not_be_null : false
+      full_name_should_not_be_null : false,
+      loading : false,
+      incorrect_user_or_password : false
     };
     this.updateIndex = this.updateIndex.bind(this)
     this.updateUsername = this.updateUsername.bind(this)
@@ -31,15 +45,18 @@ class Authentication extends Component {
     this.checkPasswordMatch = this.checkPasswordMatch.bind(this)
     this.checkPasswordStrengh = this.checkPasswordStrengh.bind(this)
     this.validateForm = this.validateForm.bind(this)
+    this.login = this.login.bind(this)
+    this.login_or_sign_up = this.login_or_sign_up.bind(this)
   }
 
-  userSignup() {
-    Actions.frame();
+  login_or_sign_up(){
+    if (this.state.selectedIndex == 0) {
+      this.validateForm()
+    }else {
+      this.login()
+    }
   }
 
-  userLogin() {
-    Actions.frame();
-  }
 
   updateIndex(index){
     this.setState({selectedIndex: index})
@@ -52,70 +69,113 @@ class Authentication extends Component {
       this.setState({username_should_not_be_null: false, username_exists:false})
     }
   }
-  updatePhoneNumber(phone_number){
-    res = /^[0-9]{11}$/.test(phone_number)
-    this.setState({phone_number_error: !res})
-    if (!res) {
-      this.setState({phone_number:phone_number})
-    }
-  }
+
   checkPasswordMatch(password){
     res = password == this.state.password
     this.setState({password_error: !res, confirm_password: password})
   }
 
   checkPasswordStrengh(password){
+    this.setState({password_should_not_be_null: false, incorrect_user_or_password : false})
     if (password.length < 8) {
       this.setState({password_strength_error: true})
     }else {
       this.setState({password_strength_error: false})
-      this.setState({password:password, password_should_not_be_null: false})
+      this.setState({password:password})
     }
   }
 
   validateForm(){
-
+    this.setState({loading: true})
     if (this.state.username === '' || this.state.username == null) {
-      this.setState({username_should_not_be_null: true})
+      this.setState({username_should_not_be_null: true, loading:false})
       return
     }
     if(this.state.password === ''|| this.state.password == null){
-      this.setState({password_should_not_be_null: true})
+      this.setState({password_should_not_be_null: true, loading:false})
       return
     }
     if(this.state.fullname == null || this.state.fullname === ''){
-      this.setState({full_name_should_not_be_null: true})
+      this.setState({full_name_should_not_be_null: true, loading:false})
       return
     }
     if (!this.state.username_error && !this.state.password_error) {
-       fetch(sign_up_url
-       ,
-          {
-            method: 'POST',
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              username: this.state.username,
-              password: this.state.password,
-              first_name: this.state.fullname
-            })
-          }
-        )
-         .then((response) =>{
-           console.log(response.json());
-
+      fetch(sign_up_url
+      ,
+         {
+           method: 'POST',
+           headers: {
+             'Accept': 'application/json',
+             'Content-Type': 'application/json',
+           },
+           body: JSON.stringify({
+             username: this.state.username,
+             password: this.state.password,
+             first_name: this.state.fullname
+           })
          }
-         )
-         .then((responseJson) => {
+       )
+        .then((response) => {
+          if (response.status === 201) {
+            this.login()
+          }
+          return response.json()
+        })
+        .then((responseJson) => {
+          console.log(responseJson.username[0]);
+          if (responseJson.username[0] === 'A user with that username already exists.' ) {
+            this.setState({loading: false, username_exists: true})
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        });
 
-         })
-         .catch((error) => {
-           console.error(error);
-         });
+    }
+  }
+
+  login(){
+    this.setState({loading: true})
+    if (this.state.username === '' || this.state.username == null) {
+      this.setState({username_should_not_be_null: true, loading:false})
+      return
+    }
+    if(this.state.password === ''|| this.state.password == null){
+      this.setState({password_should_not_be_null: true, loading:false})
+      return
     }
 
+    fetch(login_url
+    ,
+       {
+         method: 'POST',
+         headers: {
+           'Accept': 'application/json',
+           'Content-Type': 'application/json',
+         },
+         body: JSON.stringify({
+           username: this.state.username,
+           password: this.state.password,
+         })
+       }
+     )
+      .then((response) => {
+        console.log(response);
+        return response.json()
+      })
+      .then((responseJson) => {
+        if (responseJson.hasOwnProperty('non_field_errors')) {
+          this.setState({incorrect_user_or_password: true})
+        }
+        if (responseJson.hasOwnProperty('token')) {
+          saveToken(responseJson.token, true)
+        }
+        this.setState({loading: false})
+      })
+      .catch((error) => {
+        console.error(error);
+        this.setState({loading : false})
+      });
   }
 
 
@@ -146,6 +206,7 @@ class Authentication extends Component {
                   onChangeText={(username) => this.updateUsername(username)}
                   ref='username'
                   returnKeyType='next'
+
                 />
               </Item>
               {this.state.username_error&&
@@ -154,8 +215,9 @@ class Authentication extends Component {
               {this.state.username_should_not_be_null &&
               <Text style={{color:'red'}}>نام کاربری نمیتواند خالی باشد</Text>}
               {this.state.username_exists &&
-                <Text style={{color:'red'}}>این نام کاربری قبلا انتحاب شده است</Text>
+                <Text style={{color:'red'}}>این نام کاربری قبلا انتخاب شده است.</Text>
               }
+
               <Item style={styles.textInput}>
                 <Input
                   editable={true}
@@ -164,10 +226,14 @@ class Authentication extends Component {
                   ref='password'
                   placeholder='رمز عبور'
                   returnKeyType='next'
+
                 />
               </Item>
               {this.state.selectedIndex == 0 && this.state.password_strength_error &&
                 <Text style={{color:'red'}}>رمز عبور باید بیشتر از ۸ کاراکتر باشد</Text>
+              }
+              {this.state.incorrect_user_or_password &&
+                <Text style={{color:'red'}}>نام کاربری و یا رمز عبور اشتباه است.</Text>
               }
               {this.state.password_should_not_be_null &&
                 <Text style={{color:'red'}}>رمز عبور نمیتواند خالی باشد</Text>
@@ -181,6 +247,7 @@ class Authentication extends Component {
                     ref='confirm_password'
                     placeholder='تکرار رمز عبور'
                     returnKeyType='next'
+
                   />
                 </Item>
               }
@@ -209,18 +276,23 @@ class Authentication extends Component {
           </Card>
 
         </Content>
-        <Footer style={{backgroundColor: '#263238'}}>
-          <Button block success style={{flex:1, margin: 4}} onPress={()=>this.validateForm()}>
-            <Text style={{color:'#ffffff', margin: 2}}>خب</Text>
-            <Icon color='#ffffff' name='done' />
+        <Footer style={{backgroundColor: '#263238', alignItems:'center'}}>
+          {this.state.loading ? (
+            <Spinner />
+          ) : (
+            <Button block success style={{flex:1, margin: 4}} onPress={()=>this.login_or_sign_up()}>
+              <Text style={{color:'#ffffff', margin: 2}}>خب</Text>
+              <Icon color='#ffffff' name='done' />
+            </Button>
+          )}
 
-          </Button>
         </Footer>
 
       </Container>
     );
   }
 }
+
 
 
 

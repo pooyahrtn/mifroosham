@@ -1,2 +1,5 @@
 const base_url = 'http://192.168.42.156:8000/'
 export const sign_up_url = base_url+'profiles/sign_up/'
+export const login_url = base_url+'profiles/login/'
+export const my_profile = base_url+'profiles/me/'
+export const update_profile_photo_url = base_url+'profiles/update_photo/'
