@@ -9,11 +9,13 @@ import UserReducer from './userReducer.js';
 import ActiveUser from './activeUserReducer.js';
 import CapturedImagePathReducer from './capturedImagePathReducer.js';
 import ChangeConnectionState from './changeConnectionReducer.js'
+import UserData from './UserDataReducer.js'
 
 const allReducers= combineReducers({
   repos: GitReducer,
   activeRepo: ActiveRepo,
   activeTab: ActiveTab,
+  userData : UserData,
   pendingNotifications: PendingNotifications,
   recentHistory: RecentHistory,
   userInfo: UserReducer,

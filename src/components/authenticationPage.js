@@ -1,20 +1,14 @@
 import React, {Component} from 'react';
 import {View, TouchableWithoutFeedback, StyleSheet, StatusBar, AsyncStorage} from 'react-native';
-import { Container,Content, Header, Body, Text,Footer ,Button, Card, Input, Item, Label, Spinner} from 'native-base';
+import { Container,Content, Header, Body, Text,Footer ,Button, Label, Spinner} from 'native-base';
 import {Actions} from 'react-native-router-flux';
-import { Icon, ButtonGroup} from 'react-native-elements';
-import {sign_up_url, login_url} from '../serverAddress.js'
+import { Icon, ButtonGroup, FormLabel, FormInput, Card} from 'react-native-elements';
+import {sign_up_url, resend_confirmation_code_url} from '../serverAddress.js'
+import {connect} from 'react-redux';
+import {bindActionCreators} from 'redux';
+import {userData} from '../actions/index';
 
-async function saveToken(token, is_sign_up){
-  try {
-    AsyncStorage.setItem('@Token:key', token.toString());
-    if (is_sign_up) {
-      Actions.newProfilePage();
-    }
-  } catch (error) {
-    console.log('save_error' + error);
-  }
-}
+
 
 
 class Authentication extends Component {
@@ -24,18 +18,17 @@ class Authentication extends Component {
     this.state = {
       username: null,
       password: null ,
-      fullname: null,
       confirm_password : null,
       selectedIndex: 0,
       username_error: false,
-      phone_number: '12345678912',
+      phone_number: null,
       phone_number_error: false,
+      phone_number_null_error : false,
       password_error : false,
       password_strength_error : false,
       username_exists : false,
       username_should_not_be_null : false,
       password_should_not_be_null : false,
-      full_name_should_not_be_null : false,
       loading : false,
       incorrect_user_or_password : false
     };
@@ -46,16 +39,10 @@ class Authentication extends Component {
     this.checkPasswordStrengh = this.checkPasswordStrengh.bind(this)
     this.validateForm = this.validateForm.bind(this)
     this.login = this.login.bind(this)
-    this.login_or_sign_up = this.login_or_sign_up.bind(this)
+    this.signUp = this.signUp.bind(this)
   }
 
-  login_or_sign_up(){
-    if (this.state.selectedIndex == 0) {
-      this.validateForm()
-    }else {
-      this.login()
-    }
-  }
+
 
 
   updateIndex(index){
@@ -85,6 +72,15 @@ class Authentication extends Component {
     }
   }
 
+  updatePhoneNumber(phone_number){
+    res = /^[0-9]{11}$/.test(phone_number)
+    this.setState({phone_number_error: !res})
+    if (res) {
+      this.setState({phone_number:phone_number})
+    }
+    return res
+  }
+
   validateForm(){
     this.setState({loading: true})
     if (this.state.username === '' || this.state.username == null) {
@@ -95,57 +91,26 @@ class Authentication extends Component {
       this.setState({password_should_not_be_null: true, loading:false})
       return
     }
-    if(this.state.fullname == null || this.state.fullname === ''){
-      this.setState({full_name_should_not_be_null: true, loading:false})
+    if(this.state.phone_number == null || this.state.phone_number ===''){
+      this.setState({phone_number_null_error : true, loading:false})
       return
     }
-    if (!this.state.username_error && !this.state.password_error) {
-      fetch(sign_up_url
-      ,
-         {
-           method: 'POST',
-           headers: {
-             'Accept': 'application/json',
-             'Content-Type': 'application/json',
-           },
-           body: JSON.stringify({
-             username: this.state.username,
-             password: this.state.password,
-             first_name: this.state.fullname
-           })
-         }
-       )
-        .then((response) => {
-          if (response.status === 201) {
-            this.login()
-          }
-          return response.json()
-        })
-        .then((responseJson) => {
-          console.log(responseJson.username[0]);
-          if (responseJson.username[0] === 'A user with that username already exists.' ) {
-            this.setState({loading: false, username_exists: true})
-          }
-        })
-        .catch((error) => {
-          console.error(error);
-        });
-
+    if(!this.updatePhoneNumber(this.state.phone_number)){
+      this.setState({loading:false})
+      return
     }
+    this.props.userData({username:this.state.username, password:this.state.password, is_sign_up:this.state.selectedIndex})
+    if (this.state.selectedIndex == 0) {
+      this.signUp()
+    }else {
+      this.login()
+      // Actions.confirmationPage()
+    }
+
   }
 
-  login(){
-    this.setState({loading: true})
-    if (this.state.username === '' || this.state.username == null) {
-      this.setState({username_should_not_be_null: true, loading:false})
-      return
-    }
-    if(this.state.password === ''|| this.state.password == null){
-      this.setState({password_should_not_be_null: true, loading:false})
-      return
-    }
-
-    fetch(login_url
+  signUp(){
+    fetch(sign_up_url
     ,
        {
          method: 'POST',
@@ -156,25 +121,56 @@ class Authentication extends Component {
          body: JSON.stringify({
            username: this.state.username,
            password: this.state.password,
+           phone_number: this.state.phone_number
          })
        }
      )
       .then((response) => {
-        console.log(response);
+        if (response.status === 501) {
+          this.setState({loading: false, username_exists: true})
+          return
+        }else if (response.status == 201) {
+
+        }
         return response.json()
       })
       .then((responseJson) => {
-        if (responseJson.hasOwnProperty('non_field_errors')) {
-          this.setState({incorrect_user_or_password: true})
-        }
-        if (responseJson.hasOwnProperty('token')) {
-          saveToken(responseJson.token, true)
-        }
-        this.setState({loading: false})
+
       })
       .catch((error) => {
         console.error(error);
-        this.setState({loading : false})
+      });
+  }
+
+  login(){
+    fetch(resend_confirmation_code_url
+    ,
+       {
+         method: 'POST',
+         headers: {
+           'Accept': 'application/json',
+           'Content-Type': 'application/json',
+         },
+         body: JSON.stringify({
+           username: this.state.username,
+           password: this.state.password
+         })
+       }
+     )
+      .then((response) => {
+        this.setState({loading:false})
+        if (response.status === 200) {
+          Actions.confirmationPage()
+        }else if (response.status == 201) {
+
+        }
+        return response.json()
+      })
+      .then((responseJson) => {
+
+      })
+      .catch((error) => {
+        console.error(error);
       });
   }
 
@@ -184,12 +180,13 @@ class Authentication extends Component {
     return (
       <Container>
         <StatusBar
-           backgroundColor="#263238"
-           barStyle="light-content"
+           backgroundColor="#F5F5F5"
+           barStyle="dark-content"
          />
-        <Content style={{backgroundColor: '#263238'}}>
-          <Text style={{flex:1, textAlign:'center', fontSize:30, fontWeight:'bold',
-          padding:10, color:'#ffffff', alignItems:'center'}}>سلمینو</Text>
+
+        <Text style={{textAlign:'center', backgroundColor:'#F5F5F5',fontSize:30, fontWeight:'bold',
+        padding:10, alignItems:'center'}}>سلمینو</Text>
+        <Content style={{backgroundColor: '#F5F5F5'}}>
           <ButtonGroup
             onPress={this.updateIndex}
             selectedIndex={this.state.selectedIndex}
@@ -198,89 +195,85 @@ class Authentication extends Component {
             textStyle={{fontWeight:'bold'}}
             selectedTextStyle={{color:'#ffffff'}}
             containerStyle={{height: 40}} />
-            <Card>
-              <Item error={this.state.username_error} style={styles.textInput}>
-                <Input
-                  editable={true}
-                  placeholder='نام کاربری'
-                  onChangeText={(username) => this.updateUsername(username)}
-                  ref='username'
-                  returnKeyType='next'
+            <View style={{flex:1, justifyContent:'flex-end'}}>
+              <FormLabel>نام کاربری</FormLabel>
+              <FormInput
+                editable={true}
+                placeholder='نام کاربری'
+                onChangeText={(username) => this.updateUsername(username)}
+                ref='username'
+                returnKeyType='next'
 
-                />
-              </Item>
+              />
+
               {this.state.username_error&&
-                <Text style={{color:'red'}}>نام کاربری باید فقط از حروف لاتین باشد</Text>
+                <Text style={styles.errotText}>نام کاربری باید فقط از حروف لاتین باشد</Text>
                 }
               {this.state.username_should_not_be_null &&
-              <Text style={{color:'red'}}>نام کاربری نمیتواند خالی باشد</Text>}
+              <Text style={styles.errotText}>نام کاربری نمیتواند خالی باشد</Text>}
               {this.state.username_exists &&
-                <Text style={{color:'red'}}>این نام کاربری قبلا انتخاب شده است.</Text>
+                <Text style={styles.errotText}>این نام کاربری قبلا انتخاب شده است.</Text>
               }
-
-              <Item style={styles.textInput}>
-                <Input
+              <FormLabel>رمز عبور</FormLabel>
+              <FormInput
                   editable={true}
                   secureTextEntry={true}
                   onChangeText={(password) => this.checkPasswordStrengh(password)}
                   ref='password'
                   placeholder='رمز عبور'
                   returnKeyType='next'
-
                 />
-              </Item>
+
               {this.state.selectedIndex == 0 && this.state.password_strength_error &&
-                <Text style={{color:'red'}}>رمز عبور باید بیشتر از ۸ کاراکتر باشد</Text>
+                <Text style={styles.errotText}>رمز عبور باید بیشتر از ۸ کاراکتر باشد</Text>
               }
               {this.state.incorrect_user_or_password &&
-                <Text style={{color:'red'}}>نام کاربری و یا رمز عبور اشتباه است.</Text>
+                <Text style={styles.errotText}>نام کاربری و یا رمز عبور اشتباه است.</Text>
               }
               {this.state.password_should_not_be_null &&
-                <Text style={{color:'red'}}>رمز عبور نمیتواند خالی باشد</Text>
+                <Text style={styles.errotText}>رمز عبور نمیتواند خالی باشد</Text>
               }
               {this.state.selectedIndex == 0 &&
-                <Item style={styles.textInput}>
-                  <Input
-                    editable={true}
-                    secureTextEntry={true}
-                    onChangeText={(password) => this.checkPasswordMatch(password)}
-                    ref='confirm_password'
-                    placeholder='تکرار رمز عبور'
-                    returnKeyType='next'
+              <View>
+                <FormLabel>رمز عبور</FormLabel>
+                <FormInput
+                  editable={true}
+                  secureTextEntry={true}
+                  onChangeText={(password) => this.checkPasswordMatch(password)}
+                  ref='confirm_password'
+                  placeholder='تکرار رمز عبور'
+                  returnKeyType='next'
 
-                  />
-                </Item>
+                />
+
+              </View>
+
               }
               {this.state.selectedIndex == 0 && this.state.password_error &&
-                <Text style={{color:'red'}}>رمز ها با همدیگر تطابق ندارند</Text>
+                <Text style={styles.errotText}>رمز ها با همدیگر تطابق ندارند</Text>
               }
-              {this.state.selectedIndex == 0 &&
-                <Item error={this.state.username_error} style={styles.textInput}>
-                  <Input
-                    editable={true}
-                    placeholder='نام کامل (نامی که در برنامه نمایش داده میشود)'
-                    onChangeText={(fullname) =>{
-                      this.setState({fullname})
-                      if (fullname !== '') {
-                        this.setState({full_name_should_not_be_null: false})
-                      }
-                  }}
-                    ref='fullname'
-                    returnKeyType='next'
-                  />
-                </Item>
+              <FormLabel>شماره تماس</FormLabel>
+              <FormInput
+                keyboardType='numeric'
+                onChangeText={(phone_number) => {
+                  this.setState({phone_number: phone_number, phone_number_null_error:false})
+              }}
+                placeholder='لطفا شماره تلفن همراه خود را وارد کنید'
+                returnKeyType='next'/>
+              {this.state.phone_number_error &&
+                <Text style={styles.errotText}>شماره تماس معتبر نیست</Text>
               }
-              {this.state.full_name_should_not_be_null &&
-                <Text style={{color:'red'}}>نام کاربری نمیتواند خالی باشد</Text>
+              {this.state.phone_number_null_error &&
+                <Text style={styles.errotText}>شماره تماس برای اعتبارسنجی لازم است.</Text>
               }
-          </Card>
 
+          </View>
         </Content>
-        <Footer style={{backgroundColor: '#263238', alignItems:'center'}}>
+        <Footer style={{backgroundColor: '#f5f5f5', alignItems:'center'}}>
           {this.state.loading ? (
             <Spinner />
           ) : (
-            <Button block success style={{flex:1, margin: 4}} onPress={()=>this.login_or_sign_up()}>
+            <Button block success style={{flex:1, margin: 4}} onPress={()=>this.validateForm()}>
               <Text style={{color:'#ffffff', margin: 2}}>خب</Text>
               <Icon color='#ffffff' name='done' />
             </Button>
@@ -316,7 +309,20 @@ const styles = StyleSheet.create({
   textInput:{
     padding:2,
     margin:5
+  },
+  errotText:{
+    color:'red',
+    padding:1
   }
 })
 
-export default Authentication;
+
+function mapStateToProps(state){
+  return{
+
+  };
+}
+function matchDispatchToProps(dispatch){
+  return bindActionCreators({userData: userData}, dispatch)
+}
+export default connect(mapStateToProps, matchDispatchToProps)(Authentication);

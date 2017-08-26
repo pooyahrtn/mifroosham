@@ -1,5 +1,6 @@
+
 import React, {Component} from 'react';
-import {View, TouchableWithoutFeedback, StyleSheet, StatusBar, AsyncStorage, NetInfo, Alert, TextInput} from 'react-native';
+import {View, TouchableWithoutFeedback, StyleSheet, StatusBar, AsyncStorage, NetInfo, Alert, TextInput, BackHandler} from 'react-native';
 import { Container,Content, Header, Body, Text,Footer ,Button, Card, Input, Item, Label, Spinner} from 'native-base';
 import {Actions} from 'react-native-router-flux';
 import { Icon, ButtonGroup, Avatar, CheckBox, FormLabel, FormInput} from 'react-native-elements';
@@ -10,7 +11,6 @@ import {my_profile, update_profile_photo_url} from '../serverAddress.js';
 // import {bindActionCreators} from 'redux';
 //
 
-
 export default class NewProfilePage extends Component {
 
   constructor(props){
@@ -20,13 +20,13 @@ export default class NewProfilePage extends Component {
       avatar_url : null,
       token : null,
       isConnected : false,
-      phone_number_error : false,
-      phone_number : null,
       show_phone_number : false,
       bio: null,
       loading: false,
       avatar_url_error : false,
-      phone_number_null_error : false,
+      full_name : null,
+      full_name_should_not_be_null : false,
+
     }
     // this.props.token = get_user_token()
     this.updateProfileRequest = this.updateProfileRequest.bind(this)
@@ -39,6 +39,7 @@ export default class NewProfilePage extends Component {
   componentDidMount(){
     NetInfo.isConnected.fetch().then(isConnected => {this.setState({isConnected: isConnected})});
     NetInfo.isConnected.addEventListener('change', this._handleConnectionChange);
+    BackHandler.addEventListener('hardwareBackPress', this.handleBackButton);
     AsyncStorage.getItem('@Token:key')
     .then((value) => this.setState({token: value }))
     .catch((error) => {
@@ -47,19 +48,17 @@ export default class NewProfilePage extends Component {
   }
 
   componentWillUnmount() {
-    NetInfo.isConnected.removeEventListener('change', this._handleConnectionChange);
+   NetInfo.isConnected.removeEventListener('change', this._handleConnectionChange);
+   BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton);
   }
 
   _handleConnectionChange = (isConnected) => {
     this.setState({isConnected:isConnected})
   };
 
-  updatePhoneNumber(phone_number){
-    res = /^[0-9]{11}$/.test(phone_number)
-    this.setState({phone_number_error: !res})
-    if (!res) {
-      this.setState({phone_number:phone_number})
-    }
+  handleBackButton() {
+      BackHandler.exitApp()
+      return true;
   }
 
   updateProfileRequest(){
@@ -70,51 +69,56 @@ export default class NewProfilePage extends Component {
          headers: {
            'Accept': 'application/json',
            'Content-Type': 'application/json',
+           'Authorization': 'Token ' + this.state.token,
          },
          body: JSON.stringify({
-           bio: this.state.password,
-           first_name: this.state.fullname
+           bio: this.state.bio,
+           show_phone_number: this.state.show_phone_number,
+           full_name : this.state.full_name,
+           location : null
          })
        }
      )
       .then((response) => {
-        if (response.status === 201) {
-          this.login()
+        this.setState({loading:false})
+        if (response.status === 200) {
+          Actions.root()
         }
         return response.json()
       })
       .then((responseJson) => {
-        console.log(responseJson.username[0]);
-        if (responseJson.username[0] === 'A user with that username already exists.' ) {
-          this.setState({loading: false, username_exists: true})
-        }
+        this.setState({loading:false})
+        console.log('json : ' + responseJson);
       })
       .catch((error) => {
+        this.setState({loading:false})
         console.error(error);
       });
   }
 
   submit(){
+    this.setState({loading:true})
     if (this.state.avatar_url == null) {
-      this.setState({avatar_url_error:true})
+      this.setState({avatar_url_error:true, loading:false})
       return
     }
-    if(this.state.phone_number == null || this.state.phone_number ===''){
-      this.setState({phone_number_null_error : true})
+
+    if(this.state.full_name == null || this.state.full_name === ''){
+      this.setState({full_name_should_not_be_null : true, loading:false})
       return
     }
-    this.updatePhoneNumber(this.state.phone_number)
-    if(this.state.phone_number_error){
-      return
-    }
+
     if (!this.state.isConnected) {
+      this.setState({loading:false})
       Alert.alert('اینترنت قطع است', 'لطفا مجددا تلاش کنید.')
       return
     }
+    this.updateProfileRequest()
 
   }
 
   updateProfilePhoto(image){
+
     if (!this.state.isConnected) {
       Alert.alert('اینترنت قطع است', 'لطفا مجددا تلاش کنید.')
       return
@@ -145,7 +149,7 @@ export default class NewProfilePage extends Component {
       })
       .then((responseJson) => {
         if (responseJson.hasOwnProperty('avatar_url')) {
-          this.setState({avatar_url: responseJson.avatar_url})
+          this.setState({avatar_url: responseJson.avatar_url, avatar_url_error:false})
         }
       })
       .catch((error) => {
@@ -157,10 +161,10 @@ export default class NewProfilePage extends Component {
     return (
       <Container>
         <StatusBar
-           backgroundColor="#263238"
-           barStyle="light-content"
+           backgroundColor="#F5F5F5"
+           barStyle="dark-content"
          />
-        <Content style={{backgroundColor: '#263238'}}>
+        <Content style={{backgroundColor: '#F5F5F5'}}>
           <View style={{flex:1 , flexDirection:'row', alignItems:'center', justifyContent:'center', padding: 10}}>
             {this.state.avatar_url != null ? (
               <Avatar
@@ -208,23 +212,8 @@ export default class NewProfilePage extends Component {
           {this.state.avatar_url_error &&
             <Text style={styles.errotText}>لطفا برای خود یک عکس انتخاب کنید</Text>
           }
-          <Card>
+
             <View>
-              <FormLabel>شماره تماس</FormLabel>
-              <FormInput
-                keyboardType='numeric'
-                onChangeText={(phone_number) => {
-                  this.setState({phone_number: phone_number, phone_number_null_error:false})
-              }}
-                placeholder='لطفا شماره تلفن همراه خود را وارد کنید'
-                returnKeyType='next'>
-              </FormInput>
-              {this.state.phone_number_error &&
-                <Text style={styles.errotText}>شماره تماس معتبر نیست</Text>
-              }
-              {this.state.phone_number_null_error &&
-                <Text style={styles.errotText}>شماره تماس برای اعتبارسنجی لازم است.</Text>
-              }
               <CheckBox
                 right
                 title='نشان دادن شماره تماس به دیگران'
@@ -237,18 +226,26 @@ export default class NewProfilePage extends Component {
                 checked={this.state.show_phone_number}
                 onPress={()=>{this.setState({show_phone_number: !this.state.show_phone_number})}}
               />
+              <FormLabel>نام کامل</FormLabel>
+              <FormInput
+                onChangeText={(full_name) => this.setState({full_name})}
+                placeholder='نام کاملی که در برنامه نشان داده میشود.'
+                returnKeyType='next'>
+              </FormInput>
+              {this.state.full_name_should_not_be_null &&
+                <Text style={styles.errotText}>انتخاب نام کامل ضروری است</Text>
+              }
               <FormLabel>درباره شما</FormLabel>
               <FormInput
                 multiline={true}
-                numberOfLines = {3}
+                numberOfLines = {6}
                 onChangeText={(bio) => this.setState({bio})}
                 placeholder='درصورت تمایل میتوانید درباره ی خودتان بنویسید.'
                 returnKeyType='next'>
               </FormInput>
             </View>
-          </Card>
         </Content>
-        <Footer style={{backgroundColor: '#263238', alignItems:'center'}}>
+        <Footer style={{backgroundColor: '#F5F5F5', alignItems:'center'}}>
           {this.state.loading ? (
             <Spinner />
           ) : (
@@ -263,6 +260,27 @@ export default class NewProfilePage extends Component {
     )
   }
 }
+
+//
+// {this.state.selectedIndex == 0 &&
+//   <Item error={this.state.username_error} style={styles.textInput}>
+//     <Input
+//       editable={true}
+//       placeholder='نام کامل (نامی که در برنامه نمایش داده میشود)'
+//       onChangeText={(fullname) =>{
+//         this.setState({fullname})
+//         if (fullname !== '') {
+//           this.setState({full_name_should_not_be_null: false})
+//         }
+//     }}
+//       ref='fullname'
+//       returnKeyType='next'
+//     />
+//   </Item>
+// }
+// {this.state.full_name_should_not_be_null &&
+//   <Text style={{color:'red'}}>نام کاربری نمیتواند خالی باشد</Text>
+// }
 
 const styles = StyleSheet.create({
   textInput:{

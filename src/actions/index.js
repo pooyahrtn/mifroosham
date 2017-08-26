@@ -28,6 +28,13 @@ export function repoSelected(repo){
   }
 }
 
+export function userData(userdata){
+  return{
+    type: 'User_Data',
+    payload: userdata
+  }
+}
+
 export function getPendingNotificationsThunk(){
   return function(dispatch, getState) {
     var arr = [
