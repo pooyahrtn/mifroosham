@@ -15,7 +15,7 @@ export default class DeliverItem extends Component{
   componentDidMount(){
     intervalId = setInterval(() => {
      this.setState((prevState, props) => {
-       return {remaining_time: getRemainingTimeText(this.props.end_time)};
+       return {remaining_time: getRemainingTimeText(this.state.end_time)};
      });
     }, 1000);
     this.setState({intervalId: intervalId});
@@ -27,28 +27,32 @@ export default class DeliverItem extends Component{
 
   constructor(props){
     super(props);
-    this.state = {remaining_time: getRemainingTimeText(this.props.end_time)};
+    end_time = new Date(this.props.transaction.time)/1000 + this.props.transaction.post.deliver_time * 60 * 60
+    this.state = {
+      remaining_time: getRemainingTimeText(end_time),
+      end_time : end_time
+    };
 
   }
 
   render(){
     return(
-      <Card style={{}}>
+      <Card>
         <Text style={styles.titleText}>
-          <Text style={{textDecorationLine: 'underline'}}>{this.props.title}</Text>
-          {this.props.type === 'sell' && (<Text style={{color: '#009688'}}> فروخته شد!</Text>)}
-          {this.props.type === 'buy' &&(<Text style={{color: '#009688'}}> خریده شد!</Text>)}
-          {this.props.type === 'deliver' &&(<Text style={{color: '#009688'}}> تحویل داده شد!</Text>)}
+          <Text style={{textDecorationLine: 'underline'}}>{this.props.transaction.post.title}</Text>
+          {this.props.status === 'SE' && (<Text style={{color: '#009688'}}> فروخته شد!</Text>)}
+          {this.props.status === 'BU' &&(<Text style={{color: '#009688'}}> خریده شد!</Text>)}
+          {this.props.status === 'DE' &&(<Text style={{color: '#009688'}}> تحویل داده شد!</Text>)}
          </Text>
         <Divider style={{ backgroundColor: '#eeeeee', margin:2 }} />
         <View style={{flex:1, flexDirection: 'row'}}>
           <View style={{ flexDirection: 'column', alignItems:'stretch', flex:1}}>
             <View style={{ flexDirection: 'row', justifyContent:'flex-end',padding: 1, alignItems:'center'}}>
-              <Text style={{padding: 4}}>{this.props.buyer.full_name}</Text>
-              <Thumbnail small source={{uri: this.props.buyer.avatar_url}}/>
+              <Text style={{padding: 4}}>{this.props.transaction.buyer.profile.full_name}</Text>
+              <Thumbnail small source={{uri: this.props.transaction.buyer.profile.avatar_url}}/>
             </View>
-            {this.props.type==='sell' && ( <Text style={{paddingTop: 2, fontSize:12}}> این کالا را خریداری کرد. </Text>)}
-            {(this.props.type === 'sell' || this.props.type === 'buy')&&
+            {this.props.status==='SE' && ( <Text style={{paddingTop: 2, fontSize:12}}> این کالا را خریداری کرد. </Text>)}
+            {(this.props.status === 'SE' || this.props.status === 'BU')&&
               (<View style={styles.timerContainer}>
                 <Text>{EnglighNumberToPersian(this.state.remaining_time.text)}</Text>
                 <Text style={{fontSize:12}}> مهلت تحویل : </Text>
@@ -56,8 +60,8 @@ export default class DeliverItem extends Component{
               </View>)
           }
 
-            <Text style= {styles.timeText}> {EnglighNumberToPersian(getTimeAgo(this.props.time))}</Text>
-            {this.props.type === 'deliver' && (
+            <Text style= {styles.timeText}> {EnglighNumberToPersian(getTimeAgo(new Date(this.props.time)/1000))}</Text>
+            {this.props.status === 'DE' && (
               <TouchableNativeFeedback
                 onPress={()=>{}}
                 background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
@@ -68,12 +72,12 @@ export default class DeliverItem extends Component{
               </TouchableNativeFeedback>
             )}
           </View>
-          <Image style={{height: 90, width : 90, margin: 5}} source={{uri: this.props.image_url}}/>
+          <Image style={{height: 90, width : 90, margin: 5}} source={{uri: this.props.transaction.post.image_url}}/>
         </View>
-        {this.props.type === 'sell'&& (  <Text style={styles.sellAttensionText}>
+        {this.props.status === 'SE'&& (  <Text style={styles.sellAttensionText}>
           حتما هنگام تحویل، از خریدار درخواست تایید دریافت کنید، در غیر این صورت مبلغ کالا به حساب شما واریز نخواهد شد.</Text>)}
-        {this.props.type === 'buy'&& <Text style={styles.buyAttensionText}>لطفا هنگام دریافت کالا، پس از بررسی کامل و اطمینان ، دکمه ی تایید دریافت را بزنید. در غیر این صورت فروشنده میتواند کالا را تحویل ندهد.</Text>}
-        {this.props.type === 'buy' && (
+        {this.props.status === 'BU'&& <Text style={styles.buyAttensionText}>لطفا هنگام دریافت کالا، پس از بررسی کامل و اطمینان ، دکمه ی تایید دریافت را بزنید. در غیر این صورت فروشنده میتواند کالا را تحویل ندهد.</Text>}
+        {this.props.status === 'BU' && (
           <TouchableNativeFeedback
             onPress={()=>{}}
             background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
@@ -83,23 +87,22 @@ export default class DeliverItem extends Component{
             </View>
           </TouchableNativeFeedback>
         )}
-        {(this.props.type === 'sell' || this.props.type === 'buy')&&
-          <TouchableNativeFeedback
-            onPress={()=>{phonecall(this.props.buyer.phone_number, true)}}
-            background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
-            <View style={styles.callBuyerButton}>
-              <Text style={{fontWeight: 'bold', fontSize: 15, color: '#ffffff'}}>تماس</Text>
-              <Icon name='call' color='#ffffff' size={28}/>
-            </View>
-          </TouchableNativeFeedback>
-        }
-
 
       </Card>
     )
   }
 }
 
+// {(this.props.status === 'SE' || this.props.status === 'BU')&&
+//   <TouchableNativeFeedback
+//     onPress={()=>{phonecall(this.props.buyer.phone_number, true)}}
+//     background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
+//     <View style={styles.callBuyerButton}>
+//       <Text style={{fontWeight: 'bold', fontSize: 15, color: '#ffffff'}}>تماس</Text>
+//       <Icon name='call' color='#ffffff' size={28}/>
+//     </View>
+//   </TouchableNativeFeedback>
+// }
 
 const styles = StyleSheet.create({
   titleText :{

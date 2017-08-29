@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "1002909862147",
+    "firebase_url": "https://mifroosham-ad82f.firebaseio.com",
+    "project_id": "mifroosham-ad82f",
+    "storage_bucket": "mifroosham-ad82f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1002909862147:android:dc76a1a850a17cd4",
+        "android_client_info": {
+          "package_name": "com.selmino"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1002909862147-llhibfvtebgvn8k23qq7a8cdd2kn4sco.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAE3_7SEYyxGUax_qQfKqZalS3_2VXuQtI"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

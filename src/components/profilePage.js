@@ -12,11 +12,61 @@ import ImagePicker from 'react-native-image-crop-picker';
 
 class ProfilePage extends Component {
  componentDidMount(){
-   this.props.getUserThunk(this.props.activeUser);
+
  }
  constructor(props){
    super(props);
+   this.state={
+     page : 1,
+   }
  }
+
+ renderFooter = () => {
+     if (!this.state.loading) return null;
+     return (
+       <View
+         style={{
+           paddingVertical: 20,
+           borderTopWidth: 1,
+           borderColor: "#CED0CE"
+         }}
+       >
+         <ActivityIndicator animating size="large" />
+       </View>
+     );
+   };
+
+
+ userPostsRequest = () => {
+   const { page } = this.state;
+   this.setState({ loading: true });
+   next_url = this.state.next_page
+
+   fetch(next_url,
+     {
+       method: 'GET',
+       headers: {
+         'Accept': 'application/json',
+         'Content-Type': 'application/json',
+         'Authorization': 'Token ' + this.props.token
+       }
+     }
+   )
+     .then(res => res.json())
+     .then(res => {
+       this.setState({
+         data: page === 1 ? res.results : [...this.state.data, ...res.results],
+         error: res.error || null,
+         loading: false,
+         refreshing: false,
+         next_page : res.next
+       });
+     })
+     .catch(error => {
+       this.setState({ error, loading: false });
+       console.log(error);
+     });
+ };
 
 
  render(){
@@ -85,12 +135,16 @@ class ProfilePage extends Component {
       }
       {(this.props.userInfo && this.props.userInfo.posts.length > 0)&&
         <FlatList
-         data={this.props.userInfo.posts}
+         data={this.state.data.posts}
          contentContainerStyle={styles.list}
          numColumns = {3}
-         keyExtractor={item => item.id}
+         keyExtractor={item => item.uuid}
+         refreshing = {this.state.refreshing}
+         onRefresh={()=>{}}
+         onEndReached={this.handleLoadMore}
+         onEndReachedThreshold={10}
+         ListFooterComponent={this.renderFooter}
          renderItem={({item}) =>
-
              <Image style={{width:getPostWidth(), height:getPostWidth() , borderRadius:2 , margin: 2, borderColor:'#E0E0E0', borderWidth:1}} source={{uri: item.image_url}}/>
 
          }/>

@@ -23,16 +23,16 @@ export default class CardHeaderFooterExample extends Component {
 
   constructor(props) {
     super(props);
-    if (this.props.type === 2) {
+    if (this.props.post.post_type === 2) {
       this.state = {auction_remaining_time: ''}
-    }else if (this.props.type === 1) {
+    }else if (this.props.post.post_type === 1) {
       this.state = {discound_current_price: ''};
     }
 
 }
 
 componentDidMount(){
-  if (this.props.type === 2) {
+  if (this.props.post.post_type === 2) {
 
     intervalId = setInterval(() => {
       this.setState((prevState, props) => {
@@ -41,9 +41,8 @@ componentDidMount(){
     }, 1000);
     this.setState( {intervalId: intervalId});
   }
-  else if (this.props.type === 1) {
-    // this.state = {discound_current_price: getCurrentPrice(this.props.discount.start_time, this.props.discount.end_time,
-    //   this.props.discount.real_price, this.props.discount.start_price)};
+  else if (this.props.post.post_type === 1) {
+
       intervalId = setInterval(() => {
       this.setState((prevState, props) => {
       return {discound_current_price: getCurrentPrice(this.props.discount.start_time, this.props.discount.end_time,
@@ -79,28 +78,28 @@ componentWillUnmount(){
       <Card>
 
         <View style={{flexDirection: 'row', padding: 3,flex:1,justifyContent:'flex-end' }}>
-          {this.props.is_share &&
-            <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.source_posts.sender.id)}} >
+          {this.props.reposter &&
+            <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.post.sender.id)}} >
               <View style={{flexDirection: 'row', alignItems: 'center' }}>
-                <Text style= {styles.nameText}>{this.props.source_post.sender.full_name}</Text>
-                <Thumbnail small source={{uri: this.props.source_post.sender.avatar_url}}/>
+                <Text style= {styles.nameText}>{this.props.post.sender.profile.full_name}</Text>
+                <Thumbnail small source={{uri: this.props.post.sender.profile.avatar_url}}/>
                 <Icon name='retweet'  type='evilicon' color='#444444'/>
               </View>
             </TouchableWithoutFeedback>
           }
-          <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.sender.id)}} >
+          <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.post.sender.id)}} >
             <View style={{flexDirection:'row', alignItems: 'center'}}>
-              <Text style= {styles.nameText}>{this.props.sender.full_name}</Text>
-              <Thumbnail small  source={{uri: this.props.sender.avatar_url}}/>
+              <Text style= {styles.nameText}>{this.props.post.sender.profile.full_name}</Text>
+              <Thumbnail small  source={{uri: this.props.post.sender.profile.avatar_ur}}/>
             </View>
           </TouchableWithoutFeedback>
         </View>
-        <Image source={{uri: this.props.image_url}}
-          style={{width: null , height: Dimensions.get('window').width * this.props.image_height_to_width_ratio,flex : 1, resizeMode:'contain'}}/>
+        <Image source={{uri: this.props.post.image_url}}
+          style={{width: null , height: Dimensions.get('window').width * 1,flex : 1, resizeMode:'contain'}}/>
         <View style={styles.cardItemRow}>
-          <Text style= {styles.timeText}> {EnglighNumberToPersian(getTimeAgo(this.props.sent_time))}</Text>
+          <Text style= {styles.timeText}> {EnglighNumberToPersian(getTimeAgo(new Date(this.props.post.sent_time).getTime()/1000))}</Text>
           <View style={{flex:1}}>
-            <Text style={styles.likesText}>{EnglighNumberToPersian(this.props.likes_count)} نفر پسندیده اند</Text>
+            <Text style={styles.likesText}>{EnglighNumberToPersian(this.props.post.n_likes)} نفر پسندیده اند</Text>
           </View>
 
         </View>
@@ -110,7 +109,7 @@ componentWillUnmount(){
           <Image style={{width:44, height: 20}} source={{uri: 'http://www.mahak-charity.org/main/images/mahak_chareity.png'}}/>
         </View>
         }
-        <Text style={styles.titleText} >{this.props.title}</Text>
+        <Text style={styles.titleText} >{this.props.post.title}</Text>
         </View>
 
 
@@ -127,7 +126,7 @@ componentWillUnmount(){
         </ParsedText>
 
         <View style={styles.cardItemRow}>
-          {this.props.type === 2 ?
+          {this.props.post.post_type === 2 ?
             <View style={styles.auctionTimerContainer}>
                 <Text style={styles.auctionTimerText} >{EnglighNumberToPersian(this.state.auction_remaining_time.text)}</Text>
                 <Icon type='evilicon'  name='clock' color='#009688' size={28}/>
@@ -137,10 +136,10 @@ componentWillUnmount(){
             onPress={()=>{}}
             background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
             <View style={styles.button}>
-              {this.props.type === 1 ?
+              {this.props.post.post_type === 1 ?
                 <Text style={styles.priceText} >{EnglishNumberToPersianPrice(this.state.discound_current_price)} تومان</Text>
                 :
-                <Text style={styles.priceText} >{EnglishNumberToPersianPrice(this.props.price)} تومان</Text>
+                <Text style={styles.priceText} >{EnglishNumberToPersianPrice(this.props.post.price)} تومان</Text>
               }
               <Icon type='evilicon'  name='cart' color='#ffffff' size={28}/>
             </View>
@@ -155,7 +154,7 @@ componentWillUnmount(){
 
         </View>
         <View>
-        {this.props.type === 2 &&
+        {this.props.post.post_type === 2 &&
           <View style={styles.cardItemRow}>
             <TouchableNativeFeedback
               onPress={()=>{}}

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
-import { Container, Content, Header, Left, Right, Body, Title, Text, Button, Spinner, List, ListItem, Icon } from 'native-base';
+import { Container, Content, Header, Left, Right, Body, Title, Text, Button, Spinner, ListItem, Icon } from 'native-base';
 import {connect} from 'react-redux';
+import {FlatList} from 'react-native';
 import {bindActionCreators} from 'redux';
 import { Actions } from 'react-native-router-flux';
 import {getRepos, getRepoThunk, repoSelected} from '../actions/index';
@@ -9,6 +10,26 @@ class RepoList extends Component{
   componentWillMount(){
     this.props.getRepoThunk();
   }
+  constructor(params){
+    super(params);
+    this.state = {
+      loading: false
+    }
+  }
+  renderFooter = () => {
+      if (!this.state.loading) return null;
+      return (
+        <View
+          style={{
+            paddingVertical: 20,
+            borderTopWidth: 1,
+            borderColor: "#CED0CE"
+          }}
+        >
+          <ActivityIndicator animating size="large" />
+        </View>
+      );
+    };
   render(){
     if(this.props.repos.length === 0){
     return(
@@ -46,14 +67,20 @@ class RepoList extends Component{
         <Right />
     </Header>
     <Content>
-        <List dataArray={this.props.repos}
-            renderRow={(item) =>
+        <FlatList data={this.props.repos}
+          keyExtractor={item => item.id}
+          ListFooterComponent={this.renderFooter}
+          refreshing = {true}
+          onEndReached = {()=>{this.props.setGitPage(1)
+          this.props.getRepoThunk(2)}}
+          onEndThreshold = {0}
+            renderItem={({item}) =>
                 <ListItem onPress={() => { Actions.RepoInfo();
                   this.props.repoSelected(item)}}>
                     <Text>{item.full_name}</Text>
                 </ListItem>
-                      }>
-          </List>
+                }>
+          </FlatList>
     </Content>
     </Container>
   );

@@ -10,7 +10,7 @@ import {getPendingNotifications, getPendingNotificationsThunk} from '../actions/
 
  class InboxPage extends Component {
   componentDidMount(){
-    this.props.getPendingNotificationsThunk();
+    // this.props.getPendingNotificationsThunk();
   }
   constructor(props){
     super(props);
@@ -34,7 +34,7 @@ import {getPendingNotifications, getPendingNotificationsThunk} from '../actions/
         </Header>
         <Content>
             <FlatList data={this.props.pendingNotifications}
-                keyExtractor={item => item.id}
+                keyExtractor={item => item.uuid}
                 renderItem={({item}) =>
                   <DeliverItem
                     {...item}

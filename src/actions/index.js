@@ -21,6 +21,13 @@ export function getRepoThunk() {
   }
 }
 
+export function tokenReceived(value){
+  return{
+    type: 'Token_Reducer',
+    payload: value
+  }
+}
+
 export function repoSelected(repo){
   return{
     type: 'Repo_Selected',

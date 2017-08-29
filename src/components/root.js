@@ -1,17 +1,18 @@
 import React, { Component } from 'react';
-import {View, TouchableWithoutFeedback} from 'react-native';
+import {View, TouchableWithoutFeedback, AsyncStorage} from 'react-native';
 import { Icon } from 'react-native-elements';
-import { Container, Badge,Content, Header, Body, Title, Text, Button, Footer, FooterTab} from 'native-base';
+import { Container, Badge, Header, Body, Title, Text, Button, Footer, FooterTab} from 'native-base';
 import { DefaultRenderer } from 'react-native-router-flux';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import { Actions } from 'react-native-router-flux';
-import {tabSelected,userSelected ,getPendingNotifications, getPendingNotificationsThunk} from '../actions/index.js';
+import {tabSelected,userSelected ,getPendingNotifications, getPendingNotificationsThunk, userData} from '../actions/index.js';
 import Main from './main.js';
 import HistoryPage from './historyPage.js';
 import ProfilePage from './profilePage.js';
 import IconBadge from 'react-native-icon-badge';
 import {EnglighNumberToPersian} from '../utility/NumberUtils.js';
+import {my_profile} from '../serverAddress.js';
 
 
 
@@ -24,7 +25,8 @@ class Root extends Component{
   }
 
   componentWillMount(){
-    this.props.getPendingNotificationsThunk();
+
+    this.props.getPendingNotificationsThunk(this.props.activeToken);
   }
 
 
@@ -44,18 +46,18 @@ class Root extends Component{
              }
           </View>
           <View style= {{flexDirection:'column',alignItems: 'center',justifyContent: 'center' ,flex:2}}>
-              <Title style={{ color: '#ffffff', fontWeight:'bold'}}>سلمینو</Title>
+              <Title style={{ color: '#ffffff', fontWeight:'bold'}}>selmino</Title>
           </View>
           <View style= {{flexDirection:'column',alignItems: 'flex-end',justifyContent: 'center' ,flex:1}}>
             <Icon name="search" color='#ffffff' size={31}/>
           </View>
         </Header>
-        <Content>
+        <View style={{flex:1}}>
           <CurrentPage currentTab={this.state.currentTab} openProfilePage={(user_id)=>{
             this.props.userSelected(user_id);
             Actions.profilePage()
           }}/>
-        </Content>
+        </View>
         <Footer>
           <FooterTab style={{backgroundColor: '#ffffff'}}>
             <Button vertical onPress={() => {
@@ -79,8 +81,42 @@ class Root extends Component{
 
             </Button>
             <Button vertical onPress={() => {
-              this.props.userSelected(0);
-              this.setState({currentTab: 4})
+              if(this.props.username){
+                this.props.userSelected(this.props.username);
+                this.setState({currentTab: 4})
+              }else{
+                AsyncStorage.getItem('@username')
+                .then( (value) =>{
+                    if (value != null){
+                      this.props.userData(value)
+                      this.props.userSelected(value);
+                      this.setState({currentTab: 4})
+                    } else{
+                      fetch(my_profile,
+                        {
+                          method: 'GET',
+                          headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Token ' + this.props.activeToken
+                          }
+                        }
+                      )
+                        .then(res => res.json())
+                        .then(res => {
+                          this.props.userData(res.user.username)
+                          this.props.userSelected(value);
+                          this.setState({currentTab: 4})
+                        })
+                        .catch(error => {
+
+                          console.log(error);
+                        });
+                    }
+                  }
+                );
+              }
+
             }}>
               <Icon name="person" color={TabButtonColor(4,this.state.currentTab)} size={28}/>
             </Button>
@@ -117,13 +153,15 @@ function CurrentPage(props){
 
 function mapStateToProps(state){
   return{
+    activeToken: state.activeToken,
     tabSelected : state.tabSelected,
     pendingNotifications : state.pendingNotifications,
+    username : state.userData
   };
 }
 
 function matchDispatchToProps(dispatch){
-  return bindActionCreators({tabSelected : tabSelected,getPendingNotificationsThunk: getPendingNotificationsThunk, userSelected: userSelected}, dispatch)
+  return bindActionCreators({tabSelected : tabSelected,getPendingNotificationsThunk: getPendingNotificationsThunk, userSelected: userSelected, }, dispatch)
 }
 
 export default connect(mapStateToProps, matchDispatchToProps)(Root);
