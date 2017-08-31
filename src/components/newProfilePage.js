@@ -2,7 +2,7 @@
 import React, {Component} from 'react';
 import {View, TouchableWithoutFeedback, StyleSheet, StatusBar, AsyncStorage, NetInfo, Alert, TextInput, BackHandler} from 'react-native';
 import { Container,Content, Header, Body, Text,Footer ,Button, Card, Input, Item, Label, Spinner} from 'native-base';
-import {Actions} from 'react-native-router-flux';
+// import {Actions} from 'react-native-router-flux';
 import { Icon, ButtonGroup, Avatar, CheckBox, FormLabel, FormInput} from 'react-native-elements';
 import ImagePicker from 'react-native-image-crop-picker';
 import {my_profile, update_profile_photo_url} from '../serverAddress.js';
@@ -18,7 +18,6 @@ export default class NewProfilePage extends Component {
     this.state = {
       loading_profile_pic : false,
       avatar_url : null,
-      token : null,
       isConnected : false,
       show_phone_number : false,
       bio: null,
@@ -40,11 +39,7 @@ export default class NewProfilePage extends Component {
     NetInfo.isConnected.fetch().then(isConnected => {this.setState({isConnected: isConnected})});
     NetInfo.isConnected.addEventListener('change', this._handleConnectionChange);
     BackHandler.addEventListener('hardwareBackPress', this.handleBackButton);
-    AsyncStorage.getItem('@Token:key')
-    .then((value) => this.setState({token: value }))
-    .catch((error) => {
-      console.error(error);
-    });
+
   }
 
   componentWillUnmount() {
@@ -69,7 +64,7 @@ export default class NewProfilePage extends Component {
          headers: {
            'Accept': 'application/json',
            'Content-Type': 'application/json',
-           'Authorization': 'Token ' + this.state.token,
+           'Authorization': 'Token ' + this.props.navigation.state.params.token,
          },
          body: JSON.stringify({
            bio: this.state.bio,
@@ -82,7 +77,7 @@ export default class NewProfilePage extends Component {
       .then((response) => {
         this.setState({loading:false})
         if (response.status === 200) {
-          Actions.root()
+          this.props.navigation.navigate('MyApp', {token: this.props.navigation.state.params.token})
         }
         return response.json()
       })
@@ -138,7 +133,7 @@ export default class NewProfilePage extends Component {
          headers: {
            'Accept': 'application/json',
            'Content-Type': 'multipart/form-data',
-           'Authorization': 'Token ' + this.state.token,
+           'Authorization': 'Token ' + this.props.navigation.state.params.token,
          },
          body: formdata
        }
@@ -261,26 +256,6 @@ export default class NewProfilePage extends Component {
   }
 }
 
-//
-// {this.state.selectedIndex == 0 &&
-//   <Item error={this.state.username_error} style={styles.textInput}>
-//     <Input
-//       editable={true}
-//       placeholder='نام کامل (نامی که در برنامه نمایش داده میشود)'
-//       onChangeText={(fullname) =>{
-//         this.setState({fullname})
-//         if (fullname !== '') {
-//           this.setState({full_name_should_not_be_null: false})
-//         }
-//     }}
-//       ref='fullname'
-//       returnKeyType='next'
-//     />
-//   </Item>
-// }
-// {this.state.full_name_should_not_be_null &&
-//   <Text style={{color:'red'}}>نام کاربری نمیتواند خالی باشد</Text>
-// }
 
 const styles = StyleSheet.create({
   textInput:{

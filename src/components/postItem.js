@@ -79,7 +79,7 @@ componentWillUnmount(){
 
         <View style={{flexDirection: 'row', padding: 3,flex:1,justifyContent:'flex-end' }}>
           {this.props.reposter &&
-            <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.post.sender.id)}} >
+            <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.post.sender.username)}} >
               <View style={{flexDirection: 'row', alignItems: 'center' }}>
                 <Text style= {styles.nameText}>{this.props.post.sender.profile.full_name}</Text>
                 <Thumbnail small source={{uri: this.props.post.sender.profile.avatar_url}}/>
@@ -87,10 +87,10 @@ componentWillUnmount(){
               </View>
             </TouchableWithoutFeedback>
           }
-          <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.post.sender.id)}} >
+          <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.post.sender.username)}} >
             <View style={{flexDirection:'row', alignItems: 'center'}}>
               <Text style= {styles.nameText}>{this.props.post.sender.profile.full_name}</Text>
-              <Thumbnail small  source={{uri: this.props.post.sender.profile.avatar_ur}}/>
+              <Thumbnail small  source={{uri: this.props.post.sender.profile.avatar_url}}/>
             </View>
           </TouchableWithoutFeedback>
         </View>

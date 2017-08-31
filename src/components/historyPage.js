@@ -6,6 +6,11 @@ import HistoryItem from './historyItem.js'
 import {getRecentHistoryThunk} from '../actions/index';
 
 class HistoryPage extends Component {
+  static navigationOptions = {
+    tabBarLabel: 'اتفاقات؟',
+    tabBarIcon: () => (<Icon size={24} color="white" name="history" />)
+  }
+
  componentDidMount(){
    this.props.getRecentHistoryThunk();
  }

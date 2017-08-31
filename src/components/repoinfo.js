@@ -10,9 +10,7 @@ class RepoInfo extends Component{
       <Container>
           <Header>
               <Left>
-              <Button transparent onPress= {()=>Actions.pop()}>
-                            <Icon name='arrow-back' />
-                        </Button>
+        
               </Left>
               <Body>
                   <Title>Repo Info</Title>

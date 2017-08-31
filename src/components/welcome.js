@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { Container, Content, Header, Left, Right, Body, Title, Text, Button, Card, CardItem } from 'native-base';
-import { Actions } from 'react-native-router-flux';
+// import { Actions } from 'react-native-router-flux';
 
  class Welcome extends Component {
     render() {
@@ -26,7 +26,7 @@ import { Actions } from 'react-native-router-flux';
                             </Text>
                         </CardItem>
                     </Card>
-                <Button dark block onPress= {() =>{ Actions.RepoList();}} style= {{marginTop: 40}}>
+                <Button dark block onPress= {() =>{}} style= {{marginTop: 40}}>
                       <Text> Fetch Github Repos </Text>
                     </Button>
                 </Content>

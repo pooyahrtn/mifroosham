@@ -3,7 +3,7 @@ import {View} from 'react-native';
 import { Icon } from 'react-native-elements';
 import { Container,Button ,Content, Header, Body, Title} from 'native-base';
 import ProfilePage from './profilePage.js';
-import { Actions } from 'react-native-router-flux';
+// import { Actions } from 'react-native-router-flux';
 
 export default class InboxPage extends Component {
 
@@ -13,9 +13,7 @@ export default class InboxPage extends Component {
       <Container>
         <Header androidStatusBarColor="#263238" style={{backgroundColor: '#37474F'}}>
           <View style= {{flexDirection:'row',alignItems: 'center',justifyContent: 'flex-start' ,flex:1}}>
-            <Button transparent onPress= {()=>Actions.pop()}>
-              <Icon name='arrow-back' color='#ffffff'/>
-            </Button>
+
           </View>
 
           <View style= {{flexDirection:'column',alignItems: 'center',justifyContent: 'center' ,flex:2}}>

@@ -1,17 +1,17 @@
 import React, {Component} from 'react';
-import {View, TouchableWithoutFeedback, StyleSheet, StatusBar, AsyncStorage} from 'react-native';
+import {View, TouchableWithoutFeedback, StyleSheet, StatusBar, Alert} from 'react-native';
 import { Container,Content, Header, Body, Text,Footer ,Button, Label, Spinner} from 'native-base';
-import {Actions} from 'react-native-router-flux';
+// import {Actions} from 'react-native-router-flux';
 import { Icon, ButtonGroup, FormLabel, FormInput, Card} from 'react-native-elements';
 import {sign_up_url, resend_confirmation_code_url} from '../serverAddress.js'
-import {connect} from 'react-redux';
-import {bindActionCreators} from 'redux';
-import {userData} from '../actions/index';
+// import {connect} from 'react-redux';
+// import {bindActionCreators} from 'redux';
+// import {userData} from '../actions/index';
 
 
 
 
-class Authentication extends Component {
+export default class Authentication extends Component {
 
   constructor() {
     super();
@@ -99,12 +99,11 @@ class Authentication extends Component {
       this.setState({loading:false})
       return
     }
-    this.props.userData({username:this.state.username, password:this.state.password, is_sign_up:this.state.selectedIndex})
+
     if (this.state.selectedIndex == 0) {
       this.signUp()
     }else {
       this.login()
-      // Actions.confirmationPage()
     }
 
   }
@@ -126,13 +125,21 @@ class Authentication extends Component {
        }
      )
       .then((response) => {
+        this.setState({loading: false})
         if (response.status === 501) {
-          this.setState({loading: false, username_exists: true})
+          this.setState({ username_exists: true})
           return
         }else if (response.status == 201) {
-
+          this.props.navigation.navigate('ConfirmationPage',{username: this.state.username,
+            password: this.state.password, is_sign_up:this.state.selectedIndex
+          })
+          return response.json()
+        }else if (response.status === 502) {
+          Alert.alert('خطا', 'این شماره تلفن قبلا ثبت شده است.')
         }
-        return response.json()
+        else {
+          Alert.alert('خطا', 'لطفا مجددا تلاش کنید')
+        }
       })
       .then((responseJson) => {
 
@@ -160,11 +167,13 @@ class Authentication extends Component {
       .then((response) => {
         this.setState({loading:false})
         if (response.status === 200) {
-          Actions.confirmationPage()
-        }else if (response.status == 201) {
-
+          this.props.navigation.navigate('ConfirmationPage',{username: this.state.username,
+            password: this.state.password, is_sign_up:this.state.selectedIndex
+          })
+          return response.json()
+        }else {
+          Alert.alert('خطا', 'لطفا مجددا تلاش کنید')
         }
-        return response.json()
       })
       .then((responseJson) => {
 
@@ -316,13 +325,13 @@ const styles = StyleSheet.create({
   }
 })
 
-
-function mapStateToProps(state){
-  return{
-
-  };
-}
-function matchDispatchToProps(dispatch){
-  return bindActionCreators({userData: userData}, dispatch)
-}
-export default connect(mapStateToProps, matchDispatchToProps)(Authentication);
+//
+// function mapStateToProps(state){
+//   return{
+//
+//   };
+// }
+// function matchDispatchToProps(dispatch){
+//   return bindActionCreators({userData: userData}, dispatch)
+// }
+// export default connect(mapStateToProps, matchDispatchToProps)(Authentication);

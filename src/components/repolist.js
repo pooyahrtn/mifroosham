@@ -3,7 +3,7 @@ import { Container, Content, Header, Left, Right, Body, Title, Text, Button, Spi
 import {connect} from 'react-redux';
 import {FlatList} from 'react-native';
 import {bindActionCreators} from 'redux';
-import { Actions } from 'react-native-router-flux';
+// import { Actions } from 'react-native-router-flux';
 import {getRepos, getRepoThunk, repoSelected} from '../actions/index';
 
 class RepoList extends Component{
@@ -36,9 +36,7 @@ class RepoList extends Component{
       <Container>
           <Header>
           <Left>
-          <Button transparent onPress= {()=>Actions.pop()}>
-                        <Icon name='arrow-back' />
-                    </Button>
+
           </Left>
           <Body>
               <Title>Repo List</Title>
@@ -57,9 +55,7 @@ class RepoList extends Component{
     <Container>
     <Header>
     <Left>
-    <Button transparent onPress= {()=>Actions.pop()}>
-                  <Icon name='arrow-back' />
-              </Button>
+
     </Left>
         <Body>
             <Title>GitHub Repo List</Title>
@@ -75,7 +71,7 @@ class RepoList extends Component{
           this.props.getRepoThunk(2)}}
           onEndThreshold = {0}
             renderItem={({item}) =>
-                <ListItem onPress={() => { Actions.RepoInfo();
+                <ListItem onPress={() => {
                   this.props.repoSelected(item)}}>
                     <Text>{item.full_name}</Text>
                 </ListItem>

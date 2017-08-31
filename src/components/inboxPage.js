@@ -4,7 +4,7 @@ import { Icon } from 'react-native-elements';
 import { Container,Button ,Content, Header, Body, Title, List} from 'native-base';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
-import { Actions } from 'react-native-router-flux';
+// import { Actions } from 'react-native-router-flux';
 import DeliverItem from './deliverItem.js'
 import {getPendingNotifications, getPendingNotificationsThunk} from '../actions/index';
 
@@ -21,9 +21,7 @@ import {getPendingNotifications, getPendingNotificationsThunk} from '../actions/
       <Container>
         <Header androidStatusBarColor="#263238" style={{backgroundColor: '#37474F'}}>
           <View style= {{flexDirection:'row',alignItems: 'center',justifyContent: 'flex-start' ,flex:1}}>
-            <Button transparent onPress= {()=>Actions.pop()}>
-              <Icon name='arrow-back' color='#ffffff'/>
-            </Button>
+
           </View>
 
           <View style= {{flexDirection:'column',alignItems: 'center',justifyContent: 'center' ,flex:2}}>

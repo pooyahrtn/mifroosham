@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import {connect} from 'react-redux';
 import {FlatList, StyleSheet, Dimensions, Image, View, Text,TouchableWithoutFeedback, Linking} from 'react-native';
 import {bindActionCreators} from 'redux';
-import { Card ,  Thumbnail} from 'native-base';
+import { Card ,  Thumbnail, Footer, FooterTab, Container, Button} from 'native-base';
 import {getUserThunk} from '../actions/index';
 import { Icon } from 'react-native-elements';
 import {countText, EnglishNumberToPersianPrice} from '../utility/NumberUtils.js';
@@ -12,7 +12,43 @@ import ImagePicker from 'react-native-image-crop-picker';
 
 class ProfilePage extends Component {
  componentDidMount(){
+   if(this.props.activeUser === '@me'){
+     if(this.props.activeUserData && this.props.activeUserData.hasOwnProperty('username')){
 
+
+     }else{
+       AsyncStorage.getItem('@username')
+       .then( (value) =>{
+           if (value != null){
+             this.props.userData({username: value})
+
+           } else{
+             fetch(my_profile,
+               {
+                 method: 'GET',
+                 headers: {
+                   'Accept': 'application/json',
+                   'Content-Type': 'application/json',
+                   'Authorization': 'Token ' + this.props.activeToken
+                 }
+               }
+             )
+               .then(res => res.json())
+               .then(res => {
+                 AsyncStorage.setItem('@username', res.user.username)
+                 this.props.userData({username: res.user.username})
+
+               })
+               .catch(error => {
+                 console.log(error);
+               });
+           }
+         }
+       );
+     }
+   }else {
+
+   }
  }
  constructor(props){
    super(props);
@@ -20,6 +56,9 @@ class ProfilePage extends Component {
      page : 1,
    }
  }
+
+
+
 
  renderFooter = () => {
      if (!this.state.loading) return null;
@@ -71,85 +110,120 @@ class ProfilePage extends Component {
 
  render(){
    return(
-     <View>
-      {this.props.userInfo &&
-        <View style={styles.personInfoContainer}>
-          <View style={{flexDirection:'row'}}>
-            <View style={{flex:1}}>
-              <View style={{flex:1,flexDirection:'row',justifyContent:'center',alignItems:'stretch'}}>
-                <View style={{flex:1,margin:1, justifyContent:'center', alignItems:'center'}}>
-                  <Text textSize={15} fontWeight='bold' style={styles.countText}>{countText(this.props.userInfo.followers_count)}</Text>
-                  <Text>مورد دیده شدن</Text>
+     <Container>
+       <View style={{flex:1}}>
+        {this.props.userInfo &&
+          <View style={styles.personInfoContainer}>
+            <View style={{flexDirection:'row'}}>
+              <View style={{flex:1}}>
+                <View style={{flex:1,flexDirection:'row',justifyContent:'center',alignItems:'stretch'}}>
+                  <View style={{flex:1,margin:1, justifyContent:'center', alignItems:'center'}}>
+                    <Text textSize={15} fontWeight='bold' style={styles.countText}>{countText(this.props.userInfo.followers_count)}</Text>
+                    <Text>مورد دیده شدن</Text>
+                  </View>
+                  <View style={{flex:1,margin:1, justifyContent:'center', alignItems:'center'}}>
+                    <Text textSize={15} fontWeight='bold' style={styles.countText}>{countText(this.props.userInfo.followings_count)}</Text>
+                    <Text>دیده کردن</Text>
+                  </View>
                 </View>
-                <View style={{flex:1,margin:1, justifyContent:'center', alignItems:'center'}}>
-                  <Text textSize={15} fontWeight='bold' style={styles.countText}>{countText(this.props.userInfo.followings_count)}</Text>
-                  <Text>دیده کردن</Text>
+                <SettingOrFollowButton following={this.props.userInfo.following} itIsMe={this.props.userInfo.itIsMe}/>
+              </View>
+              <TouchableWithoutFeedback onPress={()=>{
+                ImagePicker.openPicker({
+                  width: 300,
+                  height: 300,
+                  cropperCircleOverlay : true,
+                  cropping: true
+                }).then(image => {
+
+                });
+              }}>
+                <View style={{flex:1, alignItems:"flex-end"}}>
+                  <Thumbnail large source={{uri: this.props.userInfo.avatar_url}}/>
+                  <Text style={{padding:5, fontWeight:'bold', flex:1}}>{this.props.userInfo.full_name}</Text>
                 </View>
-              </View>
-              <SettingOrFollowButton following={this.props.userInfo.following} itIsMe={this.props.userInfo.itIsMe}/>
+              </TouchableWithoutFeedback>
+
             </View>
-            <TouchableWithoutFeedback onPress={()=>{
-              ImagePicker.openPicker({
-                width: 300,
-                height: 300,
-                cropperCircleOverlay : true,
-                cropping: true
-              }).then(image => {
-
-              });
-            }}>
-              <View style={{flex:1, alignItems:"flex-end"}}>
-                <Thumbnail large source={{uri: this.props.userInfo.avatar_url}}/>
-                <Text style={{padding:5, fontWeight:'bold', flex:1}}>{this.props.userInfo.full_name}</Text>
+            <Text style={{fontSize: 12, padding:5}}>{this.props.userInfo.bio}</Text>
+            {this.props.userInfo.itIsMe &&
+              <TouchableWithoutFeedback  onPress={()=>{}}>
+              <View style={styles.moneyButton}>
+                <Text style={{color:'#ffffff', fontWeight:'bold', fontSize:15}} > موجودی {EnglishNumberToPersianPrice(this.props.userInfo.money)} تومان</Text>
+                <Icon name='credit-card' color='#ffffff'/>
               </View>
-            </TouchableWithoutFeedback>
+            </TouchableWithoutFeedback>}
 
-          </View>
-          <Text style={{fontSize: 12, padding:5}}>{this.props.userInfo.bio}</Text>
-          {this.props.userInfo.itIsMe &&
-            <TouchableWithoutFeedback  onPress={()=>{}}>
-            <View style={styles.moneyButton}>
-              <Text style={{color:'#ffffff', fontWeight:'bold', fontSize:15}} > موجودی {EnglishNumberToPersianPrice(this.props.userInfo.money)} تومان</Text>
-              <Icon name='credit-card' color='#ffffff'/>
+            <View style={{flexDirection:'row'}}>
+            {this.props.userInfo.location &&
+              <TouchableWithoutFeedback  onPress={()=>{Linking.openURL(this.props.userInfo.location).catch(err => console.error('An error occurred', err));}}>
+                <View style={styles.contactButton}>
+                  <Text style={{color:'#ffffff', fontWeight:'bold', fontSize:15}} >آدرس</Text>
+                  <Icon name='my-location' color='#ffffff'/>
+                </View>
+              </TouchableWithoutFeedback>
+            }
+            {this.props.userInfo.phone_number &&
+              <TouchableWithoutFeedback  onPress={()=>{phonecall(this.props.userInfo.phone_number, true)}}>
+                <View style={styles.contactButton}>
+                  <Text style={{color:'#ffffff', fontWeight:'bold', fontSize:15}} >تماس</Text>
+                  <Icon name='call' color='#ffffff'/>
+                </View>
+              </TouchableWithoutFeedback> }
             </View>
-          </TouchableWithoutFeedback>}
-
-          <View style={{flexDirection:'row'}}>
-          {this.props.userInfo.location &&
-            <TouchableWithoutFeedback  onPress={()=>{Linking.openURL(this.props.userInfo.location).catch(err => console.error('An error occurred', err));}}>
-              <View style={styles.contactButton}>
-                <Text style={{color:'#ffffff', fontWeight:'bold', fontSize:15}} >آدرس</Text>
-                <Icon name='my-location' color='#ffffff'/>
-              </View>
-            </TouchableWithoutFeedback>
-          }
-          {this.props.userInfo.phone_number &&
-            <TouchableWithoutFeedback  onPress={()=>{phonecall(this.props.userInfo.phone_number, true)}}>
-              <View style={styles.contactButton}>
-                <Text style={{color:'#ffffff', fontWeight:'bold', fontSize:15}} >تماس</Text>
-                <Icon name='call' color='#ffffff'/>
-              </View>
-            </TouchableWithoutFeedback> }
           </View>
-        </View>
-      }
-      {(this.props.userInfo && this.props.userInfo.posts.length > 0)&&
-        <FlatList
-         data={this.state.data.posts}
-         contentContainerStyle={styles.list}
-         numColumns = {3}
-         keyExtractor={item => item.uuid}
-         refreshing = {this.state.refreshing}
-         onRefresh={()=>{}}
-         onEndReached={this.handleLoadMore}
-         onEndReachedThreshold={10}
-         ListFooterComponent={this.renderFooter}
-         renderItem={({item}) =>
-             <Image style={{width:getPostWidth(), height:getPostWidth() , borderRadius:2 , margin: 2, borderColor:'#E0E0E0', borderWidth:1}} source={{uri: item.image_url}}/>
+        }
+        {(this.props.userInfo && this.props.userInfo.posts.length > 0)&&
+          <FlatList
+           data={this.state.data.posts}
+           contentContainerStyle={styles.list}
+           numColumns = {3}
+           keyExtractor={item => item.uuid}
+           refreshing = {this.state.refreshing}
+           onRefresh={()=>{}}
+           onEndReached={this.handleLoadMore}
+           onEndReachedThreshold={10}
+           ListFooterComponent={this.renderFooter}
+           renderItem={({item}) =>
+               <Image style={{width:getPostWidth(), height:getPostWidth() , borderRadius:2 , margin: 2, borderColor:'#E0E0E0', borderWidth:1}} source={{uri: item.image_url}}/>
 
-         }/>
-      }
-     </View>
+           }/>
+        }
+       </View>
+       <Footer>
+        <FooterTab style={{backgroundColor: '#ffffff'}}>
+          <Button vertical onPress={() => {
+            this.setState({currentTab: 0})
+          }}>
+            <Icon name="view-day"  size={28}/>
+
+          </Button>
+          <Button vertical >
+            <Icon name="stars"  size={28}/>
+
+          </Button>
+          <Button vertical onPress={()=>{}}>
+            <Icon name="add-circle-outline" color='#9E9E9E' size={28}/>
+
+          </Button>
+          <Button vertical  onPress={() => {
+            // this.setState({currentTab: 3})
+            // Actions.historyPage()
+          }}>
+            <Icon active name="history"  size={28} />
+
+          </Button>
+          <Button vertical onPress={() => {
+            // this.props.userSelected('@me');
+            // this.setState({currentTab: 4})
+            // Actions.profilePage()
+          }}>
+            <Icon name="person" size={28}/>
+          </Button>
+        </FooterTab>
+      </Footer>
+     </Container>
+
    )
  }
 }
@@ -264,7 +338,9 @@ const styles = StyleSheet.create({
 function mapStateToProps(state){
  return{
    activeUser : state.activeUser,
-   userInfo : state.userInfo
+   userInfo : state.userInfo,
+   activeToken: state.activeToken,
+   activeUserData : state.userData
  };
 }
 function matchDispatchToProps(dispatch){

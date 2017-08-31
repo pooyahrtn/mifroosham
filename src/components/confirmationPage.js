@@ -5,14 +5,16 @@ import {View, Text, StatusBar, TextInput, ActivityIndicator, Alert, AsyncStorage
 import {Button} from 'react-native-elements';
 import {EnglighNumberToPersian} from '../utility/NumberUtils.js';
 import {resend_confirmation_code_url, login_url} from '../serverAddress.js'
-import {Actions} from 'react-native-router-flux';
+// import {Actions} from 'react-native-router-flux';
 
 
-async function saveToken(token, is_sign_up){
+async function saveToken(token, is_sign_up, navigate){
   try {
     AsyncStorage.setItem('@Token:key', token.toString());
-    if (is_sign_up) {
-      Actions.newProfilePage();
+    if (is_sign_up === 0) {
+      navigate('NewProfilePage', {token: token.toString()})
+    }else {
+      navigate('MyApp', {token: token.toString()})
     }
   } catch (error) {
     console.log('save_error' + error);
@@ -21,7 +23,7 @@ async function saveToken(token, is_sign_up){
 }
 
 
-class ConfirmationPage extends Component {
+export default class ConfirmationPage extends Component {
 
  constructor(props){
    super(props);
@@ -64,8 +66,8 @@ class ConfirmationPage extends Component {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: this.props.userData.username,
-          password: this.props.userData.password,
+          username: this.props.navigation.state.params.username,
+          password: this.props.navigation.state.params.password,
           confirm_code : this.state.confirmation_code
         })
       }
@@ -81,7 +83,7 @@ class ConfirmationPage extends Component {
      })
      .then((responseJson) => {
        if (responseJson.hasOwnProperty('token')){
-         saveToken(responseJson.token, this.props.userData.is_sign_up)
+         saveToken(responseJson.token, this.props.navigation.state.params.is_sign_up, this.props.navigation.navigate)
        }
      })
      .catch((error) => {
@@ -99,8 +101,8 @@ class ConfirmationPage extends Component {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: this.props.userData.username,
-          password: this.props.userData.password,
+          username: this.props.navigation.state.params.username,
+          password: this.props.navigation.state.params.params.password,
         })
       }
     )
@@ -174,12 +176,12 @@ class ConfirmationPage extends Component {
  }
 }
 
-function mapStateToProps(state){
- return{
-   userData : state.userData
- };
-}
-function matchDispatchToProps(dispatch){
- return bindActionCreators({}, dispatch)
-}
-export default connect(mapStateToProps, matchDispatchToProps)(ConfirmationPage);
+// function mapStateToProps(state){
+//  return{
+//    userData : state.userData
+//  };
+// }
+// function matchDispatchToProps(dispatch){
+//  return bindActionCreators({}, dispatch)
+// }
+// export default connect(mapStateToProps, matchDispatchToProps)(ConfirmationPage);

@@ -5,7 +5,7 @@ import { Container,Button , Header, Body, Title, List, Spinner} from 'native-bas
 import {Dimensions} from 'react-native';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
-import { Actions } from 'react-native-router-flux';
+// import { Actions } from 'react-native-router-flux';
 import {capturedImagePath} from '../actions/index.js';
 import Camera from 'react-native-camera';
 import ImagePicker from 'react-native-image-crop-picker';
@@ -21,7 +21,7 @@ import ImagePicker from 'react-native-image-crop-picker';
     this.camera.capture()
       .then((data) => {
         this.props.capturedImagePath(data.path);
-        Actions.newPostPage();
+        // Actions.newPostPage();
         this.setState({loading: false});
       })
       .catch(err => console.error(err));
@@ -31,9 +31,7 @@ import ImagePicker from 'react-native-image-crop-picker';
       <Container>
         <Header androidStatusBarColor="#263238" style={{backgroundColor: '#37474F'}}>
           <View style= {{flexDirection:'row',alignItems: 'center',justifyContent: 'flex-start' ,flex:1}}>
-            <Button transparent onPress= {()=>Actions.pop()}>
-              <Icon name='arrow-back' color='#ffffff'/>
-            </Button>
+
           </View>
 
           <View style= {{flexDirection:'column',alignItems: 'center',justifyContent: 'center' ,flex:2}}>
@@ -77,7 +75,7 @@ import ImagePicker from 'react-native-image-crop-picker';
               cropping: true
             }).then(image => {
               this.props.capturedImagePath(image.path);
-              Actions.newPostPage();
+              // Actions.newPostPage();
             });
           }}>
            <View style={styles.cameraBackCircle}>

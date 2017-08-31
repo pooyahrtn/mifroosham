@@ -1,15 +1,22 @@
 import React, { Component } from 'react';
 import {View, Modal, TouchableHighlight,FlatList, ActivityIndicator, AsyncStorage} from 'react-native';
 import { Icon } from 'react-native-elements';
-import {connect} from 'react-redux';
-import {bindActionCreators} from 'redux';
-import { Actions } from 'react-native-router-flux';
+// import {connect} from 'react-redux';
+// import {bindActionCreators} from 'redux';
+// import { Actions } from 'react-native-router-flux';
 import PostItem from './postItem.js';
+import {Container, Header, Title} from 'native-base';
 import {base_url} from '../serverAddress.js';
 
 
 
-class Main extends Component{
+export default class Main extends Component{
+
+  static navigationOptions = {
+    tabBarLabel: 'خانه',
+    tabBarIcon: () => (<Icon size={24} color="white" name="home" />)
+  }
+
 
   constructor(props){
     super(props);
@@ -20,16 +27,35 @@ class Main extends Component{
       error : null,
       refreshing : false,
       page :1,
+      token : null,
     };
   }
 
-  componentDidMount(){
-    this.makeRemoteRequest()
+  componentWillMount(){
+
   }
-  makeRemoteRequest = () => {
+
+  componentDidMount(){
+    AsyncStorage.getItem('@Token:key')
+    .then( (value) =>{
+        if (value != null){
+          this.setState({token: value})
+          this.makeRemoteRequest(value)
+        } else{
+          //TODO : handle this shit
+        }
+      }
+    );
+  }
+  makeRemoteRequest = (token) => {
     const { page } = this.state;
     this.setState({ loading: true });
-    next_url = this.state.next_page
+    next_url = ''
+    if (page === 1) {
+      next_url = base_url
+    }else{
+      next_url = this.state.next_page
+    }
 
     fetch(next_url,
       {
@@ -37,7 +63,7 @@ class Main extends Component{
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': 'Token ' + this.props.token
+          'Authorization': 'Token ' + token
         }
       }
     )
@@ -64,7 +90,7 @@ class Main extends Component{
          refreshing: true
        },
        () => {
-         this.makeRemoteRequest();
+         this.makeRemoteRequest(this.state.token);
        }
      );
    };
@@ -75,7 +101,7 @@ class Main extends Component{
           page: this.state.page + 1
         },
         () => {
-          this.makeRemoteRequest();
+          this.makeRemoteRequest(this.state.token);
         }
       );
     };
@@ -100,34 +126,48 @@ class Main extends Component{
 
   render(){
     return(
-      <FlatList data={this.state.data}
-        keyExtractor={item => item.post.uuid}
-        refreshing = {this.state.refreshing}
-        onRefresh={()=>{}}
-        onEndReached={this.handleLoadMore}
-        onEndReachedThreshold={10}
-        ListFooterComponent={this.renderFooter}
-        renderItem={({item}) =>
-          <PostItem
-            {...item}
-            openProfilePage = {this.props.openProfilePage}
-          />
-
-        }/>
+      <Container>
+        <Header androidStatusBarColor="#263238" style={{backgroundColor: '#37474F'}}>
+          <View style= {{flexDirection:'row',alignItems: 'center',justifyContent: 'flex-start' ,flex:1}} >
+            <Icon name='inbox' color='white' size={31} />
+          </View>
+          <View style= {{flexDirection:'column',alignItems: 'center',justifyContent: 'center' ,flex:2}}>
+              <Title style={{ color: '#ffffff', fontWeight:'bold'}}>selmino</Title>
+          </View>
+          <View style= {{flexDirection:'column',alignItems: 'flex-end',justifyContent: 'center' ,flex:1}}>
+            <Icon name="search" color='#ffffff' size={31}/>
+          </View>
+        </Header>
+        <View style={{flex:1}}>
+          <FlatList data={this.state.data}
+            keyExtractor={item => item.post.uuid}
+            refreshing = {this.state.refreshing}
+            onRefresh={()=>this.handleRefresh()}
+            onEndReached={this.handleLoadMore}
+            onEndReachedThreshold={4}
+            ListFooterComponent={this.renderFooter}
+            renderItem={({item}) =>
+              <PostItem
+                {...item}
+                openProfilePage = {this.props.openProfilePage}
+              />
+            }/>
+        </View>
+      </Container>
     )
   }
 }
 
 
 
-function mapStateToProps(state){
-  return{
-    token : state.activeToken
-  };
-}
-
-function matchDispatchToProps(dispatch){
-  return bindActionCreators({}, dispatch)
-}
-
-export default connect(mapStateToProps, matchDispatchToProps)(Main);
+// function mapStateToProps(state){
+//   return{
+//     token : state.activeToken
+//   };
+// }
+//
+// function matchDispatchToProps(dispatch){
+//   return bindActionCreators({}, dispatch)
+// }
+//
+// export default connect(mapStateToProps, matchDispatchToProps)(Main);
