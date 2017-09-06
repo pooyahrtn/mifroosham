@@ -17,9 +17,6 @@ import HistoryPage from './components/historyPage.js';
 import OneSignal from 'react-native-onesignal';
 import {my_notification_url} from './serverAddress.js'
 import {TabNavigator , StackNavigator} from 'react-navigation';
-// import {tokenReceived} from './actions/index.js';
-// import {connect} from 'react-redux';
-// import {bindActionCreators} from 'redux';
 import {Icon} from 'react-native-elements'
 import {NavigationComponent} from 'react-native-material-bottom-navigation'
 
@@ -30,6 +27,7 @@ const MyApp = TabNavigator({
   Main: {
     screen: Main,
   },
+
   HistoryPage:{
     screen: HistoryPage,
   }
@@ -38,16 +36,26 @@ const MyApp = TabNavigator({
 
   tabBarComponent:NavigationComponent,
   tabBarPosition: 'bottom',
+
   tabBarOptions: {
    bottomNavigationOptions: {
-     labelColor: 'white',
-     rippleColor: 'white',
+     rippleColor: '#BDBDBD',
+     barBackgroundColor: 'white',
+     activeLabelColor : '#455A64',
+     style:{
+      borderTopWidth: .75,
+      borderColor: '#EEEEEE',
+      elevation: 1,
+    },
+     shifting : true,
      tabs: {
        Main: {
-         barBackgroundColor: '#37474F'
+         icon : <Icon size={24} color="#BDBDBD" name="home" />,
+         activeIcon : <Icon size={24} color="#455A64" name="home" />
        },
-       MyNotificationsScreen: {
-         barBackgroundColor: '#00796B'
+       HistoryPage: {
+         icon : <Icon size={24} color="#BDBDBD" name="history" />,
+         activeIcon : <Icon size={24} color="#455A64" name="history" />
        }
      }
    }
@@ -66,7 +74,14 @@ const routeConfigs = {
   },
   MyApp :{
     screen : MyApp
+  },
+  TakePhotoPage:{
+    screen: TakePhotoPage
+  },
+  NewPostPage:{
+    screen: NewPostPage
   }
+
 }
 
 const Navigator = ({ initialRouteName }) => {

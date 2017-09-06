@@ -11,7 +11,7 @@ import Camera from 'react-native-camera';
 import ImagePicker from 'react-native-image-crop-picker';
 
 
- class TakePhotoPage extends Component {
+export default class TakePhotoPage extends Component {
 
    constructor(params){
      super(params);
@@ -20,9 +20,8 @@ import ImagePicker from 'react-native-image-crop-picker';
  takePicture() {
     this.camera.capture()
       .then((data) => {
-        this.props.capturedImagePath(data.path);
-        // Actions.newPostPage();
         this.setState({loading: false});
+        this.props.navigation.navigate('NewPostPage', {token : this.props.navigation.state.params.token, data : data.path})
       })
       .catch(err => console.error(err));
   }
@@ -74,8 +73,7 @@ import ImagePicker from 'react-native-image-crop-picker';
               height: 300,
               cropping: true
             }).then(image => {
-              this.props.capturedImagePath(image.path);
-              // Actions.newPostPage();
+              this.props.navigation.navigate('NewPostPage', {token: this.props.navigation.state.params.token, data: image.path})
             });
           }}>
            <View style={styles.cameraBackCircle}>
@@ -108,14 +106,3 @@ const styles = StyleSheet.create({
     backgroundColor:'#EEEEEE'
   }
 })
-
-
-function mapStateToProps(state){
-  return{
-
-  };
-}
-function matchDispatchToProps(dispatch){
-  return bindActionCreators({capturedImagePath: capturedImagePath }, dispatch)
-}
-export default connect(mapStateToProps, matchDispatchToProps)(TakePhotoPage);

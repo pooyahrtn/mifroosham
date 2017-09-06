@@ -1,15 +1,15 @@
 import React, { Component } from 'react';
-import {View, FlatList, StyleSheet, Image, Dimensions, Text, TouchableWithoutFeedback, TextInput} from 'react-native';
+import {View, Alert, StyleSheet, Image, Dimensions, Text, TouchableWithoutFeedback, TextInput} from 'react-native';
 import { Icon, ButtonGroup} from 'react-native-elements';
 import { Container,Button ,Content, Header,Footer, Title, Card,Item, Input, Label} from 'native-base';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
-// import { Actions } from 'react-native-router-flux';
 import {capturedImagePath} from '../actions/index.js';
 import {EnglighNumberToPersian, EnglishNumberToPersianPrice} from '../utility/NumberUtils.js';
+import {send_post_url} from '../serverAddress.js';
 
 
-class NewPostPage extends Component {
+export default class NewPostPage extends Component {
 
   constructor(params){
     super(params);
@@ -22,8 +22,13 @@ class NewPostPage extends Component {
       end_time : 24,
       chariety : false,
       description: '',
+      deliverTime : 48,
+      fixed_price_cant_be_null : false,
+      min_price_error : false,
+      max_price_cant_be_null : false,
+      start_price_greater_than_end : false,
     }
-    // WHY?!?!
+
     this.updateIndex = this.updateIndex.bind(this)
   }
   updateIndex (index) {
@@ -34,6 +39,81 @@ class NewPostPage extends Component {
       text = 'قیمت پایه'
     }
     this.setState({selectedIndex: index, priceText : text})
+  }
+
+  validateForm = ()=>{
+    if(this.state.price === 0){
+      this.setState({fixed_price_cant_be_null: true});
+      return false;
+    }
+    //discount max value check
+    if(this.state.selectedIndex === 1 && this.state.end_price === 0){
+      this.setState({max_price_cant_be_null: true});
+      return false;
+    }
+    if(this.state.price < 1000){
+      this.setState({min_price_error: true});
+      return false;
+    }
+    // discount type error
+    if(this.state.selectedIndex === 1 && this.state.end_price < this.state.price){
+      this.setState({start_price_greater_than_end: true});
+      return false;
+    }
+    if (this.state.titleText == null || this.state.titleText === '') {
+      Alert.alert('خطا', 'عنوان محصول نمیتواند خالی باشد.');
+      return false;
+    }
+    return true;
+  }
+
+  sendPost = () => {
+    if(!this.validateForm()){
+      return
+    }
+    const file = {
+      uri : this.props.navigation.state.params.data,             // e.g. 'file:///path/to/file/image123.jpg'
+      name : 'profile.jpg',            // e.g. 'image123.jpg',
+      type: 'image/jpg'             // e.g. 'image/jpg'
+    }
+
+    let formdata = new FormData();
+    formdata.append('image_url', file);
+    formdata.append('title', this.state.titleText);
+    formdata.append('sender_type', 2- this.state.selectedIndex);
+    formdata.append('description', this.state.description);
+    formdata.append('is_charity', this.state.chariety)
+    formdata.append('deliver_time', this.state.deliverTime)
+    if(this.state.selectedIndex === 2){
+      formdata.append('price', this.state.price);
+
+    }else{
+      formdata.append('price', 0)
+    }
+
+
+    fetch(send_post_url
+    ,
+       {
+         method: 'POST',
+         headers: {
+           'Accept': 'application/json',
+           'Content-Type': 'multipart/form-data',
+           'Authorization': 'Token ' + this.props.navigation.state.params.token,
+         },
+         body: formdata
+       }
+     )
+      .then((response) => {
+        console.log(response);
+        return response.json()
+      })
+      .then((responseJson) => {
+
+      })
+      .catch((error) => {
+        console.error(error);
+      });
   }
 
   render(){
@@ -56,10 +136,10 @@ class NewPostPage extends Component {
             <View style={{flex:1}}>
             <Item floatingLabel>
               <Label>عنوان محصول</Label>
-              <Input/>
+              <Input onChangeText={(text) => {this.setState({titleText : text})}}/>
             </Item>
             </View>
-            <Image source={{uri:this.props.capturedImagePath}} style={{width: 100, height:100, borderRadius: 1}}/>
+            <Image source={{uri:this.props.navigation.state.params.data}} style={{width: 100, height:100, borderRadius: 1}}/>
           </View>
         </Card>
         <Card>
@@ -72,52 +152,64 @@ class NewPostPage extends Component {
           <ButtonGroup
             onPress={this.updateIndex}
             selectedIndex={this.state.selectedIndex}
-            buttons={['مزایده','حراج', 'نقد']}
+            buttons={['مزایده','حراج', 'مقطوع']}
             selectedBackgroundColor='#006064'
             textStyle={{fontWeight:'bold'}}
             selectedTextStyle={{color:'#ffffff'}}
             containerStyle={{height: 40}} />
-            <PriceMode mode={this.state.selectedIndex} setState={this.setState}/>
-            {(this.state.selectedIndex === 0 || this.state.selectedIndex === 1)&& (<View style={{padding:9, flexDirection:'row', alignItems:'center'}}>
-              <TouchableWithoutFeedback onPress={()=>{this.setState({end_time: this.state.end_time - 1})}}>
-                <View>
-                  <Icon style={{margin:8}} name='keyboard-arrow-down' />
-                </View>
-              </TouchableWithoutFeedback>
-              <TouchableWithoutFeedback onPress={()=>{this.setState({end_time: this.state.end_time + 1})}}>
-                <View>
-                  <Icon style={{margin:8}} name='keyboard-arrow-up' />
-                </View>
-              </TouchableWithoutFeedback>
-              <Text style={{flex:1}}>
-                <Text>زمان اتمام </Text>
-                <Text>{EnglighNumberToPersian(this.state.end_time)}</Text>
-                <Text> ساعت دیگر.</Text>
-              </Text>
-              <Icon type='evilicon'  name='clock'/>
-            </View>
+            <PriceMode mode={this.state.selectedIndex} setState={(data)=>this.setState(data)}/>
+            {this.state.min_price_error && <Text style={styles.errorText}>حداقل قیمت باید ۱۰۰۰ تومان باشد.</Text>}
+            {this.state.fixed_price_cant_be_null && <Text style={styles.errorText}>قیمت نمیتواند خالی باشد</Text>}
+            {this.state.max_price_cant_be_null && <Text style={styles.errorText}>قیمت پایان نمیتواند خالی باشد.</Text>}
+            {this.state.start_price_greater_than_end && <Text style={styles.errorText}>قیمت شروع نمیتواند بیشتر از قیمت پایان باشد.</Text>}
+            {(this.state.selectedIndex === 0 || this.state.selectedIndex === 1)&& (
+              <View style={{padding:9, flexDirection:'row', alignItems:'center'}}>
+                <Icon type='simple-line-icon' name='minus' style={styles.changeTimePlusText} onPress={()=>{this.setState({end_time: this.state.end_time - 1})}}/>
+                <Icon type='simple-line-icon' name='plus' style={styles.changeTimePlusText} onPress={()=>{this.setState({end_time: this.state.end_time + 1})}} />
+                <Text style={{flex:1}}>
+                  <Text>زمان اتمام </Text>
+                  <Text>{EnglighNumberToPersian(this.state.end_time)}</Text>
+                  <Text> ساعت دیگر.</Text>
+                </Text>
+                <Icon type='evilicon'  name='clock'/>
+              </View>
             )}
         </Card>
         <Card>
           <TouchableWithoutFeedback onPress={()=>{this.setState({chariety: !this.state.chariety})}}>
             <View style={{flexDirection:'row', padding:9, alignItems:'center'}}>
               <Image style={{width:44, height: 20}} source={{uri: 'http://www.mahak-charity.org/main/images/mahak_chareity.png'}}/>
-              <Text style={{flex:1}}>
+              <Text style={{flex:1, margin: 3}}>
                 <Text>به نفع خیریه محک</Text>
                 {this.state.chariety?(<Text> باشد</Text>):(<Text> نباشد</Text>)}
               </Text>
               {this.state.chariety?(
-                <Icon type='evilicon' color='#FF9800' name='check' size={30} />
+                <Icon color='#33691E' name='check-box' size={25} />
               ):(
-                <Icon type='evilicon'  name='close-o'size={30}/>
+                <Icon name='check-box-outline-blank'size={25}/>
               )}
             </View>
           </TouchableWithoutFeedback>
         </Card>
+        <Card>
+          <View style={{padding:9, flexDirection:'row', alignItems:'center'}}>
+
+            <Icon type='simple-line-icon' name='minus' style={styles.changeTimePlusText} onPress={()=>{this.setState({deliverTime: this.state.deliverTime - 1})}}/>
+
+            <Icon type='simple-line-icon' name='plus' style={styles.changeTimePlusText} onPress={()=>{this.setState({deliverTime: this.state.deliverTime + 1})}}/>
+
+            <Text style={{flex:1}}>
+              <Text>زمان تحویل </Text>
+              <Text>{EnglighNumberToPersian(this.state.deliverTime)}</Text>
+              <Text> ساعت دیگر.</Text>
+            </Text>
+            <Icon type='evilicon'  name='clock'/>
+          </View>
+        </Card>
 
         </Content>
         <Footer style={{backgroundColor: 'transparent'}}>
-          <Button block success style={{flex:1, margin: 4}}>
+          <Button block success onPress={this.sendPost} style={{flex:1, margin: 4}}>
             <Text style={{color:'#ffffff', margin: 2}}>ارسال</Text>
             <Icon color='#ffffff' name='send' />
 
@@ -128,6 +220,7 @@ class NewPostPage extends Component {
     )
   }
 }
+
 
 
 function PriceMode(params){
@@ -187,15 +280,13 @@ const styles = StyleSheet.create({
   },
   postButton:{
     flex:1
+  },
+  changeTimePlusText:{
+    margin : 5,
+    marginRight:25
+  },
+  errorText:{
+    color:'red',
+    margin: 3
   }
 })
-
-function mapStateToProps(state){
-  return{
-    capturedImagePath: state.capturedImagePath
-  };
-}
-function matchDispatchToProps(dispatch){
-  return bindActionCreators({}, dispatch)
-}
-export default connect(mapStateToProps, matchDispatchToProps)(NewPostPage);

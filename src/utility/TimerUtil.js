@@ -1,5 +1,5 @@
 export function getRemainingTimeText(endsInTime){
-  remaining_secs = endsInTime - new Date().getTime()/1000;
+  remaining_secs = new Date(endsInTime)/1000 - new Date().getTime()/1000;
   if (remaining_secs <= 0) {
     return {text: 'مهلت تمام شد.',enabled: false};
   }

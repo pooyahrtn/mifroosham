@@ -4,11 +4,11 @@ import {FlatList} from 'react-native';
 import {bindActionCreators} from 'redux';
 import HistoryItem from './historyItem.js'
 import {getRecentHistoryThunk} from '../actions/index';
+import {Icon} from 'react-native-elements'
 
 class HistoryPage extends Component {
   static navigationOptions = {
     tabBarLabel: 'اتفاقات؟',
-    tabBarIcon: () => (<Icon size={24} color="white" name="history" />)
   }
 
  componentDidMount(){

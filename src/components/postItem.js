@@ -1,15 +1,18 @@
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import {StyleSheet,Text, View, Image, TouchableNativeFeedback,TouchableWithoutFeedback, Platform, Dimensions} from 'react-native';
 import { Card, Thumbnail} from 'native-base';
-import { Icon, Button } from 'react-native-elements';
+import { Icon, Button, Rating } from 'react-native-elements';
 import {EnglighNumberToPersian, EnglishNumberToPersianPrice} from '../utility/NumberUtils.js';
 import ParsedText from 'react-native-parsed-text';
 import {phonecall} from 'react-native-communications'
 import {getRemainingTimeText, getTimeAgo} from '../utility/TimerUtil.js';
+import {like_post_url, repost_post_url} from '../serverAddress.js';
 
 
 
-function getCurrentPrice(start_time,end_time ,real_price, start_price){
+function getCurrentPrice(start_date,end_date ,real_price, start_price){
+  let start_time = new Date(start_date).getTime()/1000
+  let end_time = new Date(end_date).getTime() / 1000
   let now = new Date().getTime()/ 1000;
   if (now >= end_time) {
     return real_price;
@@ -19,14 +22,19 @@ function getCurrentPrice(start_time,end_time ,real_price, start_price){
 }
 
 
-export default class CardHeaderFooterExample extends Component {
+export default class CardHeaderFooterExample extends PureComponent {
 
   constructor(props) {
     super(props);
+    this.state = {
+      you_liked : this.props.you_liked,
+      you_reposted : this.props.you_reposted,
+      n_likes : this.props.post.n_likes
+    }
     if (this.props.post.post_type === 2) {
-      this.state = {auction_remaining_time: ''}
+      this.state = {...this.state, auction_remaining_time: 0}
     }else if (this.props.post.post_type === 1) {
-      this.state = {discound_current_price: ''};
+      this.state = {...this.state, discound_current_price: 0};
     }
 
 }
@@ -36,7 +44,7 @@ componentDidMount(){
 
     intervalId = setInterval(() => {
       this.setState((prevState, props) => {
-      return {auction_remaining_time: getRemainingTimeText(this.props.auction.end_time)};
+      return {auction_remaining_time: getRemainingTimeText(this.props.post.auction.end_time)};
       });
     }, 1000);
     this.setState( {intervalId: intervalId});
@@ -45,8 +53,8 @@ componentDidMount(){
 
       intervalId = setInterval(() => {
       this.setState((prevState, props) => {
-      return {discound_current_price: getCurrentPrice(this.props.discount.start_time, this.props.discount.end_time,
-        this.props.discount.real_price, this.props.discount.start_price)};
+      return {discound_current_price: getCurrentPrice(this.props.post.discount.start_time, this.props.post.discount.end_time,
+        this.props.post.discount.real_price, this.props.post.discount.start_price)};
       });
     }, 1000);
     this.setState({intervalId: intervalId});
@@ -56,50 +64,117 @@ componentDidMount(){
   }
 }
 
-componentWillUnmount(){
-  if (this.state.intervalId) {
-    clearInterval(this.state.intervalId);
+  componentWillUnmount(){
+    if (this.state.intervalId) {
+      clearInterval(this.state.intervalId);
+    }
   }
-}
 
 
   handlePhonePress(phoneNumber){
     phonecall(phoneNumber, true);
   }
 
+  likePost = () => {
+    this.setState({
+      you_liked : !this.state.you_liked
+    })
+    fetch(like_post_url+this.props.post.uuid,
+      {
+        method: 'PUT',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Token ' + this.props.token
+        }
+      }
+    )
+      .then(res => {
+        if(res.status === 200)
+        return res.json()
+      })
+      .then(res => {
+        this.setState({
+          you_liked: res.liked,
+          n_likes : res.n_likes
+        });
+      })
+      .catch(error => {
+
+      });
+  }
+
+  repostPost = () => {
+    this.setState({
+      you_liked : !this.state.you_reposted
+    })
+    fetch(repost_post_url+this.props.post.uuid,
+      {
+        method: 'PUT',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Token ' + this.props.token
+        }
+      }
+    )
+      .then(res => {
+        if(res.status === 200)
+        return res.json()
+      })
+      .then(res => {
+        this.setState({
+          you_reposted: res.reposted
+        });
+      })
+      .catch(error => {
+
+      });
+  }
 
   render() {
-    if (this.props.you_liked) {
+    if (this.state.you_liked) {
       heart_color = '#b71c1c'
     }else {
       heart_color = '#000000'
     }
+    if (this.state.you_reposted) {
+      repost_color = '#b71c1c'
+    }else {
+      repost_color = '#000000'
+    }
     return (
       <Card>
 
-        <View style={{flexDirection: 'row', padding: 3,flex:1,justifyContent:'flex-end' }}>
+        <View style={{flexDirection: 'row', padding: 3,flex:1,justifyContent:'flex-end', alignItems:'center' }}>
           {this.props.reposter &&
-            <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.post.sender.username)}} >
-              <View style={{flexDirection: 'row', alignItems: 'center' }}>
-                <Text style= {styles.nameText}>{this.props.post.sender.profile.full_name}</Text>
-                <Thumbnail small source={{uri: this.props.post.sender.profile.avatar_url}}/>
-                <Icon name='retweet'  type='evilicon' color='#444444'/>
-              </View>
-            </TouchableWithoutFeedback>
-          }
+            <Rating
+            imageSize={12}
+            readonly
+            startingValue={this.props.post.sender.profile.score}
+            style = {{margin: 3}}
+            />}
           <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.post.sender.username)}} >
             <View style={{flexDirection:'row', alignItems: 'center'}}>
               <Text style= {styles.nameText}>{this.props.post.sender.profile.full_name}</Text>
               <Thumbnail small  source={{uri: this.props.post.sender.profile.avatar_url}}/>
             </View>
           </TouchableWithoutFeedback>
+          {this.props.reposter &&
+            <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.reposter.profile.username)}} >
+              <View style={{flexDirection: 'row', alignItems: 'center' }}>
+                <Icon name='retweet'  type='evilicon' color='#444444'/>
+                <Thumbnail small source={{uri: this.props.reposter.profile.avatar_url}}/>
+              </View>
+            </TouchableWithoutFeedback>
+          }
         </View>
         <Image source={{uri: this.props.post.image_url}}
           style={{width: null , height: Dimensions.get('window').width * 1,flex : 1, resizeMode:'contain'}}/>
         <View style={styles.cardItemRow}>
           <Text style= {styles.timeText}> {EnglighNumberToPersian(getTimeAgo(new Date(this.props.post.sent_time).getTime()/1000))}</Text>
           <View style={{flex:1}}>
-            <Text style={styles.likesText}>{EnglighNumberToPersian(this.props.post.n_likes)} نفر پسندیده اند</Text>
+            <Text style={styles.likesText}>{EnglighNumberToPersian(this.state.n_likes)} نفر پسندیده اند</Text>
           </View>
 
         </View>
@@ -122,7 +197,7 @@ componentWillUnmount(){
          ]
         }
         >
-          {this.props.description}
+          {this.props.post.description}
         </ParsedText>
 
         <View style={styles.cardItemRow}>
@@ -135,9 +210,9 @@ componentWillUnmount(){
           <TouchableNativeFeedback
             onPress={()=>{}}
             background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
-            <View style={styles.button}>
+            <View style={this.props.buyable?styles.activeBuyButton:styles.deactiveBuyButton}>
               {this.props.post.post_type === 1 ?
-                <Text style={styles.priceText} >{EnglishNumberToPersianPrice(this.state.discound_current_price)} تومان</Text>
+                <Text style={styles.priceText}>{EnglishNumberToPersianPrice(this.state.discound_current_price)} تومان</Text>
                 :
                 <Text style={styles.priceText} >{EnglishNumberToPersianPrice(this.props.post.price)} تومان</Text>
               }
@@ -147,9 +222,9 @@ componentWillUnmount(){
          }
 
          <View style={{flexDirection: 'row', alignItems: 'center',justifyContent: 'flex-end', flex:1 }}>
-           <Icon type='evilicon'  name='retweet' style={styles.imageButtons} size={32}/>
+           <Icon type='evilicon'  name='retweet' color={repost_color} style={styles.imageButtons} size={32} onPress={this.repostPost}/>
            <Icon type='evilicon'  name='comment' style={styles.imageButtons} size={32}/>
-           <Icon type='evilicon'  name='heart' color={heart_color} style={styles.imageButtons} size={32}/>
+           <Icon type='evilicon'  name='heart' color={heart_color} style={styles.imageButtons} size={32} onPress={this.likePost}/>
          </View>
 
         </View>
@@ -161,7 +236,11 @@ componentWillUnmount(){
               background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
 
               <View style={this.state.auction_remaining_time.enabled?styles.auctionBuyButton:styles.auctionBuyButtonDisabled}>
-                <Text style={styles.priceText} >بالاترین پیشنهاد {EnglishNumberToPersianPrice(this.props.auction.highest_suggest)} تومان</Text>
+                <Text style={styles.priceText} >بالاترین پیشنهاد {this.props.post.auction.highest_suggest ?
+                   EnglishNumberToPersianPrice(this.props.post.auction.highest_suggest)
+                    :
+                    EnglishNumberToPersianPrice(this.props.post.auction.base_money)
+                   } تومان</Text>
                 <Icon type='evilicon'  name='arrow-up' color='#ffffff' size={28}/>
               </View>
             </TouchableNativeFeedback>
@@ -189,6 +268,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#444444',
     textDecorationLine: 'underline',
+    marginRight: 2,
     fontSize: 12,
   },
   titleText: {
@@ -217,8 +297,8 @@ const styles = StyleSheet.create({
     flexDirection:'row',
     alignItems:'center',
   },
-  button: {
-   flex:1,
+  activeBuyButton: {
+    flex:1,
    padding:5,
    flexDirection:'row',
    alignItems: 'center',
@@ -226,6 +306,15 @@ const styles = StyleSheet.create({
    justifyContent: 'center',
    backgroundColor: '#43ad47'
    },
+   deactiveBuyButton: {
+     flex:1,
+    padding:5,
+    flexDirection:'row',
+    alignItems: 'center',
+    borderRadius: 5,
+    justifyContent: 'center',
+    backgroundColor: '#9E9E9E'
+    },
    auctionBuyButton: {
     flex:1,
     padding:5,

@@ -20,7 +20,7 @@ export function EnglishNumberToPersianPrice(englishNumber){
     persianNumber = firstPart + ',' + secondPart
     commaIndex = commaIndex - 3
   }
-
+  persianNumber = persianNumber
   return persianNumber;
 }
 

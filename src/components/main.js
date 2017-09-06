@@ -6,7 +6,7 @@ import { Icon } from 'react-native-elements';
 // import { Actions } from 'react-native-router-flux';
 import PostItem from './postItem.js';
 import {Container, Header, Title} from 'native-base';
-import {base_url} from '../serverAddress.js';
+import {base_url, read_feeds_url} from '../serverAddress.js';
 
 
 
@@ -14,20 +14,20 @@ export default class Main extends Component{
 
   static navigationOptions = {
     tabBarLabel: 'خانه',
-    tabBarIcon: () => (<Icon size={24} color="white" name="home" />)
   }
 
 
   constructor(props){
     super(props);
     this.state = {
-      sampleFeed:null,
+      data: null,
       loading: false,
       next_page : base_url,
       error : null,
       refreshing : false,
       page :1,
       token : null,
+      visit_version : 0
     };
   }
 
@@ -74,7 +74,8 @@ export default class Main extends Component{
           error: res.error || null,
           loading: false,
           refreshing: false,
-          next_page : res.next
+          next_page : res.next,
+          visit_version : res.visit_version
         });
       })
       .catch(error => {
@@ -84,13 +85,44 @@ export default class Main extends Component{
   };
 
   handleRefresh = () => {
+    _uuids = []
+    len = this.state.data.length;
+    for (i in this.state.data) {
+      feed = this.state.data[len - i - 1]
+      if (!feed.read) {
+        _uuids.push(feed.uuid)
+      }
+    }
      this.setState(
        {
          page: 1,
          refreshing: true
        },
        () => {
-         this.makeRemoteRequest(this.state.token);
+
+         fetch(read_feeds_url,
+           {
+             method: 'POST',
+             headers: {
+               'Accept': 'application/json',
+               'Content-Type': 'application/json',
+               'Authorization': 'Token ' + this.state.token
+             },
+             body: JSON.stringify({
+               visiting_version : this.state.visit_version,
+               uuids : _uuids
+             })
+           }
+         )
+           .then(res => {
+             console.log(_uuids);
+             if (res.status === 200) {
+             this.makeRemoteRequest(this.state.token)
+           }})
+           .catch(error => {
+             this.setState({ error, loading: false });
+             console.log(error);
+           });
        }
      );
    };
@@ -101,7 +133,7 @@ export default class Main extends Component{
           page: this.state.page + 1
         },
         () => {
-          this.makeRemoteRequest(this.state.token);
+          setTimeout(()=>this.makeRemoteRequest(this.state.token), 5000)
         }
       );
     };
@@ -135,20 +167,24 @@ export default class Main extends Component{
               <Title style={{ color: '#ffffff', fontWeight:'bold'}}>selmino</Title>
           </View>
           <View style= {{flexDirection:'column',alignItems: 'flex-end',justifyContent: 'center' ,flex:1}}>
-            <Icon name="search" color='#ffffff' size={31}/>
+            <Icon name="add-circle-outline" color='#ffffff'
+             onPress={()=>{this.props.navigation.navigate('TakePhotoPage', {token: this.state.token})}}
+             size={31}/>
           </View>
         </Header>
         <View style={{flex:1}}>
           <FlatList data={this.state.data}
-            keyExtractor={item => item.post.uuid}
+            keyExtractor={item => item.uuid}
             refreshing = {this.state.refreshing}
             onRefresh={()=>this.handleRefresh()}
             onEndReached={this.handleLoadMore}
             onEndReachedThreshold={4}
+            initialNumToRender={4}
             ListFooterComponent={this.renderFooter}
             renderItem={({item}) =>
               <PostItem
                 {...item}
+                token = {this.state.token}
                 openProfilePage = {this.props.openProfilePage}
               />
             }/>
