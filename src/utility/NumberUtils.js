@@ -1,4 +1,7 @@
 export function  EnglighNumberToPersian (englishNumber)  {
+  if (englishNumber == 0) {
+    return ' '
+  }
   id= ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
   var englishNumber = String(englishNumber).toLocaleString();;
   for (var i = 0; i <= 9; i++) {

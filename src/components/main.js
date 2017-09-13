@@ -180,6 +180,7 @@ export default class Main extends Component{
             onEndReached={this.handleLoadMore}
             onEndReachedThreshold={4}
             initialNumToRender={4}
+            extraData={this.state}
             ListFooterComponent={this.renderFooter}
             renderItem={({item}) =>
               <PostItem

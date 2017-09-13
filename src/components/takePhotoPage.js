@@ -69,8 +69,8 @@ export default class TakePhotoPage extends Component {
           </View>
           <TouchableWithoutFeedback onPress= {()=>{
             ImagePicker.openPicker({
-              width: 300,
-              height: 300,
+              width: 600,
+              height: 600,
               cropping: true
             }).then(image => {
               this.props.navigation.navigate('NewPostPage', {token: this.props.navigation.state.params.token, data: image.path})
