@@ -1,12 +1,12 @@
 import React, { Component } from 'react';
-import {View, Alert, StyleSheet, Image, Dimensions, Text, TouchableWithoutFeedback, TextInput} from 'react-native';
+import {View, Alert, StyleSheet, Image, Dimensions, Text, TouchableWithoutFeedback, TextInput, Modal, ScrollView, ActivityIndicator} from 'react-native';
 import { Icon, ButtonGroup} from 'react-native-elements';
 import { Container,Button ,Content, Header,Footer, Title, Card,Item, Input, Label} from 'native-base';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {capturedImagePath} from '../actions/index.js';
 import {EnglighNumberToPersian, EnglishNumberToPersianPrice} from '../utility/NumberUtils.js';
-import {send_post_url} from '../serverAddress.js';
+import {send_post_url, send_post_helps_url} from '../serverAddress.js';
 
 
 export default class NewPostPage extends Component {
@@ -19,18 +19,28 @@ export default class NewPostPage extends Component {
       priceText : 'قیمت',
       price: 0,
       end_price: 0,
-      end_time : 24,
+      end_time : 1,
       chariety : false,
       description: '',
-      deliverTime : 48,
+      deliverTime : 2,
       fixed_price_cant_be_null : false,
       min_price_error : false,
       max_price_cant_be_null : false,
       start_price_greater_than_end : false,
+      ads_included : false,
+      show_help_modal : false,
+      helps_texts : undefined,
+      postLocation : undefined,
+      loading_location: false,
+      selected_help : '',
     }
-
     this.updateIndex = this.updateIndex.bind(this)
   }
+
+  componentDidMount (){
+      this.requestLoadHelpInvestmetnText()
+  }
+
   updateIndex (index) {
     let text = ''
     if (index === 1) {
@@ -39,6 +49,12 @@ export default class NewPostPage extends Component {
       text = 'قیمت پایه'
     }
     this.setState({selectedIndex: index, priceText : text})
+  }
+
+  requestLoadHelpInvestmetnText = ()=>{
+    fetch(send_post_helps_url).then((response) => {
+      return response.json()
+    }).then((resjson) =>{this.setState({helps_texts: resjson})}).catch((error) => console.error(error, 'shit this fuck'))
   }
 
   validateForm = ()=>{
@@ -77,18 +93,28 @@ export default class NewPostPage extends Component {
       type: 'image/jpg'             // e.g. 'image/jpg'
     }
 
-    let formdata = new FormData();
+    var formdata = new FormData();
     formdata.append('image_url', file);
     formdata.append('title', this.state.titleText);
     formdata.append('sender_type', 2- this.state.selectedIndex);
     formdata.append('description', this.state.description);
     formdata.append('is_charity', this.state.chariety)
     formdata.append('deliver_time', this.state.deliverTime)
+    formdata.append('location', this.state.postLocation)
     if(this.state.selectedIndex === 2){
       formdata.append('price', this.state.price);
-
     }else{
       formdata.append('price', 0)
+    }
+    if(this.state.selectedIndex === 1){
+      formdata.append('discount_start_price', this.state.price)
+      formdata.append('discount_end_price', this.state.end_price)
+
+      formdata.append('end_time', this.state.end_time)
+    } else if(this.state.selectedIndex === 0){
+      formdata.append('auction_base_price', this.state.price)
+
+      formdata.append('end_time', this.state.end_time)
     }
 
 
@@ -119,6 +145,7 @@ export default class NewPostPage extends Component {
   render(){
     return(
       <Container>
+
         <Header androidStatusBarColor="#263238" style={{backgroundColor: '#37474F'}}>
           <View style= {{flexDirection:'row',alignItems: 'center',justifyContent: 'flex-start' ,flex:1}}>
 
@@ -131,6 +158,28 @@ export default class NewPostPage extends Component {
           </View>
         </Header>
         <Content>
+        <Modal
+          transparent={true}
+          visible={this.state.show_help_modal}
+          onRequestClose={() => {this.setState({show_help_modal: !this.state.show_help_modal})}}
+          animationType="slide"
+          >
+          <View style={{flex: 1, justifyContent:'center', backgroundColor:'rgba(0, 0, 0, 0.70)'}}>
+            <View style={{margin: 22, backgroundColor:'#ffffff', borderRadius: 3}}>
+
+                <View>
+                  {!this.state.helps_texts ? (<Text>تلاش مجدد </Text>):(
+                    <Text style={{margin: 10, fontSize:16}}>{this.state.helps_texts[this.state.selected_help]}</Text>
+                  )}
+                </View>
+                <Button block success onPress={()=>this.setState({show_help_modal: !this.state.show_help_modal})} style={{margin: 4}}>
+                  <Text style={{color:'#ffffff', margin: 2}}>خب</Text>
+                </Button>
+
+
+            </View>
+          </View>
+        </Modal>
         <Card>
           <View style={{flexDirection:'row', alignItems:'flex-end', padding:3}}>
             <View style={{flex:1}}>
@@ -142,12 +191,7 @@ export default class NewPostPage extends Component {
             <Image source={{uri:this.props.navigation.state.params.data}} style={{width: 100, height:100, borderRadius: 1}}/>
           </View>
         </Card>
-        <Card>
-          <TextInput style={{flex:1, margin: 5}} multiline={true} numberOfLines = {4}
-            maxLength={350} onChangeText={(text) => this.setState({description: text})}
-            placeholder='توضیحات... از # برای دسته بندی استفاده کنید. مثلا #کتاب'
-          />
-        </Card>
+
         <Card>
           <ButtonGroup
             onPress={this.updateIndex}
@@ -164,49 +208,137 @@ export default class NewPostPage extends Component {
             {this.state.start_price_greater_than_end && <Text style={styles.errorText}>قیمت شروع نمیتواند بیشتر از قیمت پایان باشد.</Text>}
             {(this.state.selectedIndex === 0 || this.state.selectedIndex === 1)&& (
               <View style={{padding:9, flexDirection:'row', alignItems:'center'}}>
-                <Icon type='simple-line-icon' name='minus' style={styles.changeTimePlusText} onPress={()=>{this.setState({end_time: this.state.end_time - 1})}}/>
-                <Icon type='simple-line-icon' name='plus' style={styles.changeTimePlusText} onPress={()=>{this.setState({end_time: this.state.end_time + 1})}} />
+                {this.state.selectedIndex === 0 &&   <Icon name='question' type='evilicon'  style={styles.changeTimePlusText} onPress={()=>{this.setState({show_help_modal:true, selected_help:'auction'})}}/>}
+                {this.state.selectedIndex === 1 &&   <Icon name='question' type='evilicon'  style={styles.changeTimePlusText} onPress={()=>{this.setState({show_help_modal:true, selected_help:'discount'})}}/>}
+                <Icon type='evilicon' name='minus' style={styles.changeTimePlusText} onPress={()=>{this.setState({end_time: this.state.end_time - 1})}}/>
+                <Icon type='evilicon' name='plus' style={styles.changeTimePlusText} onPress={()=>{this.setState({end_time: this.state.end_time + 1})}} />
                 <Text style={{flex:1}}>
                   <Text>زمان اتمام </Text>
                   <Text>{EnglighNumberToPersian(this.state.end_time)}</Text>
-                  <Text> ساعت دیگر.</Text>
+                  <Text> روز دیگر.</Text>
                 </Text>
                 <Icon type='evilicon'  name='clock'/>
               </View>
             )}
         </Card>
         <Card>
-          <TouchableWithoutFeedback onPress={()=>{this.setState({chariety: !this.state.chariety})}}>
-            <View style={{flexDirection:'row', padding:9, alignItems:'center'}}>
-              <Image style={{width:44, height: 20}} source={{uri: 'http://www.mahak-charity.org/main/images/mahak_chareity.png'}}/>
-              <Text style={{flex:1, margin: 3}}>
-                <Text>به نفع خیریه محک</Text>
-                {this.state.chariety?(<Text> باشد</Text>):(<Text> نباشد</Text>)}
-              </Text>
-              {this.state.chariety?(
-                <Icon color='#33691E' name='check-box' size={25} />
-              ):(
-                <Icon name='check-box-outline-blank'size={25}/>
-              )}
-            </View>
-          </TouchableWithoutFeedback>
+          <Text style={styles.sectionTitleText}>توضیحات</Text>
+          <TextInput style={{flex:1, margin: 5}} multiline={true} numberOfLines = {4}
+            maxLength={350} onChangeText={(text) => this.setState({description: text})}
+            placeholder='از # برای دسته بندی استفاده کنید. مثلا #کتاب'
+          />
         </Card>
         <Card>
           <View style={{padding:9, flexDirection:'row', alignItems:'center'}}>
+            <Icon name='question' type='evilicon'  style={styles.changeTimePlusText} onPress={()=>{this.setState({show_help_modal:true, selected_help:'deliver_time'})}}/>
+            <Icon type='evilicon' name='minus' style={styles.changeTimePlusText} onPress={()=>{this.setState({deliverTime: this.state.deliverTime - 1})}}/>
 
-            <Icon type='simple-line-icon' name='minus' style={styles.changeTimePlusText} onPress={()=>{this.setState({deliverTime: this.state.deliverTime - 1})}}/>
-
-            <Icon type='simple-line-icon' name='plus' style={styles.changeTimePlusText} onPress={()=>{this.setState({deliverTime: this.state.deliverTime + 1})}}/>
+            <Icon type='evilicon' name='plus' style={styles.changeTimePlusText} onPress={()=>{this.setState({deliverTime: this.state.deliverTime + 1})}}/>
 
             <Text style={{flex:1}}>
-              <Text>زمان تحویل </Text>
+              <Text> مهلت تحویل</Text>
               <Text>{EnglighNumberToPersian(this.state.deliverTime)}</Text>
-              <Text> ساعت دیگر.</Text>
+              <Text> روز. </Text>
             </Text>
             <Icon type='evilicon'  name='clock'/>
           </View>
         </Card>
+        <Card>
+          <Text style={styles.sectionTitleText}>خیریه</Text>
+          <View style={{flexDirection:'row'}}>
+            <Icon name='question' type='evilicon'  style={{padding:3}} onPress={()=>{this.setState({show_help_modal:true, selected_help:'charity'})}}/>
+            <TouchableWithoutFeedback onPress={()=>{this.setState({chariety: !this.state.chariety})}}>
+              <View style={{flexDirection:'row', padding:9, flex:1 ,alignItems:'center'}}>
+                <Image style={{width:44, height: 20}} source={{uri: 'http://www.mahak-charity.org/main/images/mahak_chareity.png'}}/>
+                <Text style={{flex:1, margin: 3}}>
+                  <Text>به نفع خیریه محک</Text>
+                  {this.state.chariety?(<Text> باشد</Text>):(<Text> نباشد</Text>)}
+                </Text>
+                {this.state.chariety?(
+                  <Icon color='#33691E' name='check-box' size={25} />
+                ):(
+                  <Icon name='check-box-outline-blank'size={25}/>
+                )}
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </Card>
 
+        <Card>
+          <Text style={styles.sectionTitleText}>محل فروش (اختیاری)</Text>
+          <View style={{flexDirection:'row', justifyContent:'center'}}>
+            <Icon name='question' type='evilicon' style={{padding:5}} onPress={()=>{this.setState({show_help_modal:true, selected_help:'location'})}}/>
+            <View style={{flex:1 , height: 40}}>
+              {this.state.loading_location?
+                (
+                  <ActivityIndicator style={{margin: 6}}/>
+                ) :
+                (
+                  !this.state.postLocation?
+                     (
+                       <TouchableWithoutFeedback  onPress={()=>{
+                         this.setState({loading_location: true})
+                         navigator.geolocation.getCurrentPosition(
+                          (position) => {
+                           let latitude = Math.round(position.coords.latitude * 100) / 100
+                           let longitude = Math.round(position.coords.longitude * 100) / 100
+                           postLocation = latitude + ',' + longitude
+                           this.setState({postLocation: postLocation, loading_location: false})
+                          },
+                          (error) => alert(error.message),
+                          { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+                       );
+                       }} >
+                       <View style={{borderColor:'green',margin: 6, alignItems:'center',flex:1, borderRadius: 2, borderWidth:1}}>
+                        <Text style={{ margin: 2, color:'green'}}>انتخاب محل فروش</Text>
+                       </View>
+
+                       </TouchableWithoutFeedback>
+                     ):
+                     (
+                       <View style={{flexDirection:'row'}}>
+
+                         <TouchableWithoutFeedback  onPress={()=>{
+                           this.setState({postLocation: undefined})
+
+                         }} >
+                         <View style={{borderColor:'red',margin: 6, alignItems:'center',flex:1, borderRadius: 2, borderWidth:1}}>
+                          <Text style={{ margin: 2, color:'red'}}>حذف محل فروش</Text>
+                         </View>
+
+                         </TouchableWithoutFeedback>
+                         <View style={{borderColor:'green',margin: 6, alignItems:'center',flex:1, borderRadius: 2, borderWidth:1}}>
+                          <Text style={{ margin: 2, color:'green'}}>محل فروش انتخاب شد</Text>
+                         </View>
+                       </View>
+
+                     )
+
+                )}
+            </View>
+
+          </View>
+
+        </Card>
+        <Card>
+          <Text style={styles.sectionTitleText}>تبلیغات</Text>
+          <View style={{flexDirection:'row'}}>
+            <Icon name='question' type='evilicon'  style={{padding:5}} onPress={()=>{this.setState({show_help_modal:true, selected_help:'investment'})}}/>
+            <TouchableWithoutFeedback onPress={()=>{this.setState({ads_included: !this.state.ads_included})}}>
+              <View style={{flexDirection:'row', padding:9, flex:1, justifyContent:'center'}}>
+                <Text style={{flex:1, margin: 3}}>
+                  <Text>۱۰ درصد برای سرمایه گذاری</Text>
+                </Text>
+                {this.state.ads_included?(
+                  <Icon color='#33691E' name='check-box' size={25} />
+                ):(
+                  <Icon name='check-box-outline-blank'size={25}/>
+                )}
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+
+        </Card>
         </Content>
         <Footer style={{backgroundColor: 'transparent'}}>
           <Button block success onPress={this.sendPost} style={{flex:1, margin: 4}}>
@@ -282,11 +414,12 @@ const styles = StyleSheet.create({
     flex:1
   },
   changeTimePlusText:{
-    margin : 5,
+    padding : 5,
     marginRight:25
   },
   errorText:{
     color:'red',
     margin: 3
-  }
+  },
+  sectionTitleText: {padding:4 , fontSize:11, fontWeight:'bold', color:'green'},
 })

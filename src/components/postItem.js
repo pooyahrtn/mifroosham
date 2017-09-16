@@ -6,6 +6,7 @@ import {EnglighNumberToPersian, EnglishNumberToPersianPrice} from '../utility/Nu
 import ParsedText from 'react-native-parsed-text';
 import {phonecall} from 'react-native-communications'
 import {getRemainingTimeText, getTimeAgo} from '../utility/TimerUtil.js';
+import {getDistanceInPersian} from '../utility/DistanceUtil.js'
 import {like_post_url, repost_post_url} from '../serverAddress.js';
 
 
@@ -161,15 +162,23 @@ componentDidMount(){
     return (
       <Card>
         {this.props.reposter &&
-          <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.reposter.profile.username)}} >
-            <View style={{flexDirection: 'row', alignItems: 'center', justifyContent:'flex-end', padding:1 }}>
-              <Icon name='retweet'  type='evilicon' color='#444444'/>
-              <Avatar rounded width={20} height={20} source={{uri: this.props.reposter.profile.avatar_url}}/>
-            </View>
-          </TouchableWithoutFeedback>
+
+          <View style={{flexDirection: 'row', alignItems: 'center', justifyContent:'flex-end', padding:2 }}>
+            <Text style={{fontSize:10,}}>این پست را به اشتراک گذاشت</Text>
+            <Icon name='retweet' type='evilicon' color='#444444'/>
+            <Text style= {{fontSize:10, margin:1,}}>{this.props.reposter.profile.full_name}</Text>
+            <Avatar rounded width={19} height={19} source={{uri: this.props.reposter.profile.avatar_url}}/>
+          </View>
+
         }
         <View style={{flexDirection: 'row', padding: 3,flex:1 , alignItems:'center' }}>
-          <Text style= {styles.timeText}> {EnglighNumberToPersian(getTimeAgo(new Date(this.props.post.sent_time).getTime()/1000))}</Text>
+          <View style={{flex:1}}>
+            <Text style= {styles.timeText}> {EnglighNumberToPersian(getTimeAgo(new Date(this.props.post.sent_time).getTime()/1000))}</Text>
+            {this.props.post.location && this.props.current_location &&
+                <Text style= {styles.timeText}> {getDistanceInPersian(this.props.current_location, this.props.post.location)}</Text>
+            }
+          </View>
+
           {this.props.reposter &&
             <Rating
             imageSize={12}
@@ -190,8 +199,12 @@ componentDidMount(){
 
 
         <View style={styles.cardItemRow}>
-          <Text style={styles.likeText}>{EnglighNumberToPersian(this.props.post.total_invested_qeroons)}</Text>
-          <Icon type='evilicon'  name='star' color={heart_color} style={styles.imageButtons} size={28} onPress={this.likePost}/>
+          {this.props.post.ads_included &&
+            <View style={{flexDirection:'row', alignItems:'center'}}>
+              <Text style={styles.likeText}>{EnglighNumberToPersian(this.props.post.total_invested_qeroons)}</Text>
+              <Icon type='evilicon'  name='star' color={heart_color} style={styles.imageButtons} size={28} onPress={this.likePost}/>
+            </View>
+          }
           <Text style={styles.likeText}>{EnglighNumberToPersian(this.state.n_reposts)}</Text>
           <Icon type='evilicon'  name='retweet' color={repost_color} style={styles.imageButtons} size={28} onPress={this.repostPost}/>
           <Text style={styles.likeText}>{EnglighNumberToPersian(this.state.n_likes)}</Text>

@@ -1,9 +1,6 @@
 import React, { Component } from 'react';
-import {View, Modal, TouchableHighlight,FlatList, ActivityIndicator, AsyncStorage} from 'react-native';
+import {View, Modal, TouchableHighlight,FlatList, ActivityIndicator, AsyncStorage, Alert, PermissionsAndroid} from 'react-native';
 import { Icon } from 'react-native-elements';
-// import {connect} from 'react-redux';
-// import {bindActionCreators} from 'redux';
-// import { Actions } from 'react-native-router-flux';
 import PostItem from './postItem.js';
 import {Container, Header, Title} from 'native-base';
 import {base_url, read_feeds_url} from '../serverAddress.js';
@@ -27,7 +24,8 @@ export default class Main extends Component{
       refreshing : false,
       page :1,
       token : null,
-      visit_version : 0
+      visit_version : 0,
+      current_location : undefined
     };
   }
 
@@ -42,10 +40,38 @@ export default class Main extends Component{
           this.setState({token: value})
           this.makeRemoteRequest(value)
         } else{
-          //TODO : handle this shit
+          this.props.navigation.navigate('Authentication')
         }
       }
     );
+    PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION).then((res) => {
+      if (!res) {
+        PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            'title': 'اجازه دستیابی به موقعیت مکانی',
+            'message': 'برای نشان دادن فاصله ی پست ها از شما این دسترسی لازم است.'
+          }
+        ).then(
+          (granted) => {
+            if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+              Alert.alert('hoora')
+            }
+          }
+        )
+      }else {
+        navigator.geolocation.getCurrentPosition(
+         (position) => {
+          let latitude = Math.round(position.coords.latitude * 100) / 100
+          let longitude = Math.round(position.coords.longitude * 100) / 100
+          this.setState({current_location: {latitude: latitude, longitude: longitude}})
+         },
+         (error) => alert(error.message),
+         { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+      );
+      }
+    })
+
   }
   makeRemoteRequest = (token) => {
     const { page } = this.state;
@@ -186,6 +212,7 @@ export default class Main extends Component{
               <PostItem
                 {...item}
                 token = {this.state.token}
+                current_location = {this.state.current_location}
                 openProfilePage = {this.props.openProfilePage}
               />
             }/>
