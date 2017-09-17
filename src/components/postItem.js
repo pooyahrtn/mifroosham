@@ -172,6 +172,7 @@ componentDidMount(){
 
         }
         <View style={{flexDirection: 'row', padding: 3,flex:1 , alignItems:'center' }}>
+          <Icon name='more-vert' color='#9E9E9E'/>
           <View style={{flex:1}}>
             <Text style= {styles.timeText}> {EnglighNumberToPersian(getTimeAgo(new Date(this.props.post.sent_time).getTime()/1000))}</Text>
             {this.props.post.location && this.props.current_location &&
@@ -202,7 +203,9 @@ componentDidMount(){
           {this.props.post.ads_included &&
             <View style={{flexDirection:'row', alignItems:'center'}}>
               <Text style={styles.likeText}>{EnglighNumberToPersian(this.props.post.total_invested_qeroons)}</Text>
-              <Icon type='evilicon'  name='star' color={heart_color} style={styles.imageButtons} size={28} onPress={this.likePost}/>
+              <View style={{padding:1, width:19, height:19, margin:2 ,borderColor:'#000000', borderRadius: 9, borderWidth: 1, alignItems:'center', justifyContent:'flex-end'}}>
+                <Text style={{color:'#000000', fontWeight:'100', fontSize:12}}>ق</Text>
+              </View>
             </View>
           }
           <Text style={styles.likeText}>{EnglighNumberToPersian(this.state.n_reposts)}</Text>

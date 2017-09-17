@@ -33,6 +33,9 @@ export default class NewPostPage extends Component {
       postLocation : undefined,
       loading_location: false,
       selected_help : '',
+      show_send_modal: false,
+      send_loading : false,
+      sending_failed : false,
     }
     this.updateIndex = this.updateIndex.bind(this)
   }
@@ -82,10 +85,20 @@ export default class NewPostPage extends Component {
     }
     return true;
   }
-
+  showSendModal = () =>{
+    if(!this.validateForm()){
+      return
+    }
+    this.setState({show_send_modal : true})
+  }
   sendPost = () => {
     if(!this.validateForm()){
       return
+    }
+    if(this.state.send_loading){
+      return
+    }else{
+      this.setState({send_loading: true})
     }
     const file = {
       uri : this.props.navigation.state.params.data,             // e.g. 'file:///path/to/file/image123.jpg'
@@ -132,6 +145,13 @@ export default class NewPostPage extends Component {
      )
       .then((response) => {
         console.log(response);
+        if(response.status === 201){
+          this.setState({send_loading : false, show_send_modal : false})
+          this.props.navigator.popToRoot({
+            animated: true, // does the popToRoot have transition animation or does it happen immediately (optional)
+            animationType: 'fade', // 'fade' (for both) / 'slide-horizontal' (for android) does the popToRoot have different transition animation (optional)
+          });
+        }
         return response.json()
       })
       .then((responseJson) => {
@@ -177,6 +197,66 @@ export default class NewPostPage extends Component {
                 </Button>
 
 
+            </View>
+          </View>
+        </Modal>
+        <Modal
+          transparent={true}
+          visible={this.state.show_send_modal}
+          onRequestClose={() => {this.setState({show_send_modal: !this.state.show_send_modal})}}
+          animationType="slide"
+          >
+          <View style={{flex: 1, justifyContent:'center', backgroundColor:'rgba(0, 0, 0, 0.70)'}}>
+            <View style={{margin: 22, backgroundColor:'#ffffff', borderRadius: 3, flex:1,}}>
+              {!this.state.helps_texts ? (<Text>تلاش مجدد </Text>):(
+                <View style={{flex:1}}>
+                  <ScrollView style={{margin: 20, flex:1}}>
+                    <Text style={{fontSize:16, color:'green', fontWeight:'bold'}}>آیا از صحت اطلاعات وارد شده مطمئنید؟</Text>
+                    <View style={{margin: 20}}/>
+                    <Text>{this.state.helps_texts.can_change_post}</Text>
+                    <Text>{this.state.helps_texts.verify_time}</Text>
+                    {this.state.ads_included &&
+                      <Text>
+                        <Text>• درصورت فروخته شدن، </Text>
+                        <Text>{this.state.price * 0.1}</Text>
+                        <Text> تومان از قیمت پست کم میشود و به سرمایه گذار ها میرسد. </Text>
+                      </Text>}
+                    {this.state.chariety && <Text>• در صورت فروش، تمام مبلغ آن به خیریه ای که انتخاب کردید میرسد </Text>}
+                  </ScrollView>
+                  {this.state.send_loading ?
+                  (
+                    <View style={{borderColor:'green',margin: 6, alignItems:'center', borderWidth: 1,borderRadius: 2, height: 40}}>
+                      <Text style={{color:'green', margin: 2}}>در حال ارسال...</Text>
+                    </View>
+                  ) :
+                  (
+                    <View style={{flexDirection:'row'}}>
+                        <TouchableWithoutFeedback  onPress={()=>this.setState({show_send_modal: !this.state.show_send_modal})} style={{margin: 4}}>
+                          <View style={{borderColor:'red',margin: 6, alignItems:'center', justifyContent: 'center',flex:1, borderRadius: 2, borderWidth:1, height:40}}>
+                            <Text style={{color:'red', margin: 2}}>لغو</Text>
+                          </View>
+                        </TouchableWithoutFeedback>
+                        {this.state.sending_failed ?
+                          (
+                            <TouchableWithoutFeedback onPress={this.sendPost} style={{margin: 4}}>
+                              <View style={{backgroundColor:'green',margin: 6, alignItems:'center',justifyContent: 'center',flex:1, borderRadius: 2, height: 40}}>
+                                <Text style={{color:'#ffffff', margin: 2}}>تلاش مجدد</Text>
+                              </View>
+                            </TouchableWithoutFeedback>
+                          ) :
+                          (
+                            <TouchableWithoutFeedback onPress={this.sendPost} style={{margin: 4}}>
+                              <View style={{backgroundColor:'green',margin: 6, alignItems:'center', justifyContent:'center',flex:1, borderRadius: 2, height: 40}}>
+                                <Text style={{color:'#ffffff', margin: 2}}>ارسال</Text>
+                              </View>
+                            </TouchableWithoutFeedback>
+                          )}
+
+                      </View>
+                     )}
+                    </View>
+
+              )}
             </View>
           </View>
         </Modal>
@@ -337,11 +417,10 @@ export default class NewPostPage extends Component {
               </View>
             </TouchableWithoutFeedback>
           </View>
-
         </Card>
         </Content>
         <Footer style={{backgroundColor: 'transparent'}}>
-          <Button block success onPress={this.sendPost} style={{flex:1, margin: 4}}>
+          <Button block success onPress={this.showSendModal} style={{flex:1, margin: 4}}>
             <Text style={{color:'#ffffff', margin: 2}}>ارسال</Text>
             <Icon color='#ffffff' name='send' />
 
