@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import {View, FlatList, StyleSheet, TouchableWithoutFeedback, Image, StatusBar, Text, Dimensions, Modal} from 'react-native';
 import { Icon } from 'react-native-elements';
-import { Container,Button , Header, Body, Title, List, Spinner, Footer, Toast} from 'native-base';
+import { Container,Button , Header, Title, Spinner, Footer, Toast} from 'native-base';
 
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';

@@ -32,7 +32,8 @@ export default class CardHeaderFooterExample extends PureComponent {
       you_liked : this.props.you_liked,
       you_reposted : this.props.you_reposted,
       n_reposts : this.props.post.n_reposters,
-      n_likes : this.props.post.n_likes
+      n_likes : this.props.post.n_likes,
+      intervalId : undefined,
     }
     if (this.props.post.post_type === 2) {
       this.state = {...this.state, auction_remaining_time: 0}
@@ -247,7 +248,7 @@ componentDidMount(){
           <TouchableNativeFeedback
             onPress={()=>{
               if(this.props.buyable){
-                this.props.setSelectedItemToBuy(this.props.post)
+                this.props.setSelectedItemToBuy(this.props.post, this.props.reposter)
               }
           }}
             background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>

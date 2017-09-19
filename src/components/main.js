@@ -185,8 +185,8 @@ export default class Main extends Component{
       );
     };
 
-  setSelectedItemToBuy = (item)=>{
-    this.props.navigation.navigate('BuyItemPage', {post: item})
+  setSelectedItemToBuy = (item, reposter)=>{
+    this.props.navigation.navigate('BuyItemPage', {post: item, token: this.state.token, reposter: reposter})
   }
 
   render(){
