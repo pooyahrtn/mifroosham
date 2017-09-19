@@ -8,6 +8,7 @@ import {phonecall} from 'react-native-communications'
 import {getRemainingTimeText, getTimeAgo} from '../utility/TimerUtil.js';
 import {getDistanceInPersian} from '../utility/DistanceUtil.js'
 import {like_post_url, repost_post_url} from '../serverAddress.js';
+import Swiper from 'react-native-swiper';
 
 
 
@@ -194,10 +195,7 @@ componentDidMount(){
             </View>
           </TouchableWithoutFeedback>
         </View>
-
-        <Image source={{uri: this.props.post.image_url}}
-          style={{width: null , height: Dimensions.get('window').width, }}/>
-
+        <RenderImage post={this.props.post}/>
 
         <View style={styles.cardItemRow}>
           {this.props.post.ads_included &&
@@ -247,7 +245,11 @@ componentDidMount(){
             </View>
           :
           <TouchableNativeFeedback
-            onPress={()=>{}}
+            onPress={()=>{
+              if(this.props.buyable){
+                this.props.setSelectedItemToBuy(this.props.post)
+              }
+          }}
             background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
             <View style={this.props.buyable?styles.activeBuyButton:styles.deactiveBuyButton}>
               {this.props.post.post_type === 1 ?
@@ -285,8 +287,68 @@ componentDidMount(){
   }
 }
 
+function RenderImage(props){
+
+  const post = props.post;
+  if(!post.image_url_1){
+    return(
+        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
+    )
+  }else if (!post.image_url_2) {
+    return(
+      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
+        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
+      </Swiper>
+    )
+  }else if (!post.image_url_3) {
+    return(
+      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
+        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_2}} style={styles.postImage}/>
+      </Swiper>
+    )
+  }else if (!post.image_url_4) {
+    return(
+      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
+        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_2}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_3}} style={styles.postImage}/>
+      </Swiper>
+    )
+  }else if (!post.image_url_5) {
+    return(
+      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
+        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_2}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_3}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_4}} style={styles.postImage}/>
+      </Swiper>
+    )
+  }else {
+    return(
+      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
+        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_2}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_3}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_4}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_5}} style={styles.postImage}/>
+      </Swiper>
+    )
+  }
+
+}
+
 
 const styles = StyleSheet.create({
+  postImage:{
+    width: null ,
+    height: Dimensions.get('window').width
+  },
   nameText :{
     paddingRight: 5,
     color: '#444444',

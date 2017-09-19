@@ -5,6 +5,9 @@ function getLocationFromString(text){
 }
 
 export function getDistanceInPersian(current_location, pointlocation){
+  if(pointlocation === 'undefined' || pointlocation === 'null'){
+    return
+  }
   second_location = getLocationFromString(pointlocation);
   distance = Math.round(getDistanceFromLatLonInKm(current_location.latitude, current_location.longitude,
     second_location[0], second_location[1]));

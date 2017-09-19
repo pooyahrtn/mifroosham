@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-// import { Router, Scene } from 'react-native-router-flux';
+import {Root as NativeRoot}  from "native-base";
 import {AsyncStorage, View, Text, Platform, StyleSheet, PixelRatio, Button, Image} from 'react-native';
 import Welcome from './components/welcome.js';
 import Main from './components/main.js';
@@ -9,6 +9,7 @@ import InboxPage from './components/inboxPage.js';
 import ProfilePageWithHeader from './components/profilePageWithHeader.js';
 import TakePhotoPage from './components/takePhotoPage.js';
 import NewPostPage from './components/newPostPage.js';
+import BuyItemPage from './components/buyItemPage.js';
 import Authentication from './components/authenticationPage.js';
 import NewProfilePage from './components/newProfilePage.js';
 import confirmationPage from './components/confirmationPage.js';
@@ -80,6 +81,9 @@ const routeConfigs = {
   },
   NewPostPage:{
     screen: NewPostPage
+  },
+  BuyItemPage:{
+    screen: BuyItemPage,
   }
 
 }
@@ -90,7 +94,7 @@ const Navigator = ({ initialRouteName }) => {
     headerMode:'none'
   };
   const CustomNavigator = StackNavigator(routeConfigs, stackNavigatorConfigs);
-  return <CustomNavigator />;
+  return (<NativeRoot><CustomNavigator /></NativeRoot>);
 };
 
 export default class App extends Component{
@@ -195,6 +199,7 @@ export default class App extends Component{
       return <View></View>
     }
     return(
+
       Navigator({initialRouteName : this.initRout()})
     );
   }

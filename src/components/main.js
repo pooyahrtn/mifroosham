@@ -4,6 +4,7 @@ import { Icon } from 'react-native-elements';
 import PostItem from './postItem.js';
 import {Container, Header, Title} from 'native-base';
 import {base_url, read_feeds_url} from '../serverAddress.js';
+import BuyItemPage from './buyItemPage.js';
 
 
 
@@ -25,7 +26,9 @@ export default class Main extends Component{
       page :1,
       token : null,
       visit_version : 0,
-      current_location : undefined
+      current_location : undefined,
+      selected_item_to_buy : undefined,
+      show_send_modal : false,
     };
   }
 
@@ -182,12 +185,24 @@ export default class Main extends Component{
       );
     };
 
+  setSelectedItemToBuy = (item)=>{
+    this.props.navigation.navigate('BuyItemPage', {post: item})
+  }
+
   render(){
     return(
-      <Container>
+      <View style={{flex:1}}>
+        <Modal
+          transparent={true}
+          visible={this.state.show_send_modal}
+          onRequestClose={() => {this.setState({show_send_modal: !this.state.show_send_modal})}}
+          animationType="slide"
+          >
+          <View style={{flex: 1, justifyContent:'center', backgroundColor:'rgba(0, 0, 0, 0.70)'}}/>
+        </Modal>
         <Header androidStatusBarColor="#263238" style={{backgroundColor: '#37474F'}}>
           <View style= {{flexDirection:'row',alignItems: 'center',justifyContent: 'flex-start' ,flex:1}} >
-            <Icon name='inbox' color='white' size={31} />
+            <Icon name='inbox' onPress={()=>{this.setState({show_send_modal: true})}} color='white' size={31} />
           </View>
           <View style= {{flexDirection:'column',alignItems: 'center',justifyContent: 'center' ,flex:2}}>
               <Title style={{ color: '#ffffff', fontWeight:'bold'}}>selmino</Title>
@@ -211,13 +226,14 @@ export default class Main extends Component{
             renderItem={({item}) =>
               <PostItem
                 {...item}
+                setSelectedItemToBuy = {this.setSelectedItemToBuy}
                 token = {this.state.token}
                 current_location = {this.state.current_location}
                 openProfilePage = {this.props.openProfilePage}
               />
             }/>
         </View>
-      </Container>
+      </View>
     )
   }
 }

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {View, Alert, StyleSheet, Image, Dimensions, Text, TouchableWithoutFeedback, TextInput, Modal, ScrollView, ActivityIndicator} from 'react-native';
+import {View, Alert, StyleSheet, Image, Dimensions, Text, TouchableWithoutFeedback, TextInput, Modal, ScrollView, ActivityIndicator, ToastAndroid} from 'react-native';
 import { Icon, ButtonGroup} from 'react-native-elements';
 import { Container,Button ,Content, Header,Footer, Title, Card,Item, Input, Label} from 'native-base';
 import {connect} from 'react-redux';
@@ -7,6 +7,7 @@ import {bindActionCreators} from 'redux';
 import {capturedImagePath} from '../actions/index.js';
 import {EnglighNumberToPersian, EnglishNumberToPersianPrice} from '../utility/NumberUtils.js';
 import {send_post_url, send_post_helps_url} from '../serverAddress.js';
+import { NavigationActions } from 'react-navigation';
 
 
 export default class NewPostPage extends Component {
@@ -100,20 +101,28 @@ export default class NewPostPage extends Component {
     }else{
       this.setState({send_loading: true})
     }
-    const file = {
-      uri : this.props.navigation.state.params.data,             // e.g. 'file:///path/to/file/image123.jpg'
-      name : 'profile.jpg',            // e.g. 'image123.jpg',
-      type: 'image/jpg'             // e.g. 'image/jpg'
+    var formdata = new FormData();
+
+    for (var i = 0; i < this.props.navigation.state.params.data.length - 1; i++) {
+      var file = {
+        uri : this.props.navigation.state.params.data[i].uri,             // e.g. 'file:///path/to/file/image123.jpg'
+        name : 'profile.jpg',            // e.g. 'image123.jpg',
+        type: 'image/jpg'             // e.g. 'image/jpg'
+      }
+      formdata.append('image_url_'+i, file)
     }
 
-    var formdata = new FormData();
     formdata.append('image_url', file);
     formdata.append('title', this.state.titleText);
     formdata.append('sender_type', 2- this.state.selectedIndex);
     formdata.append('description', this.state.description);
     formdata.append('is_charity', this.state.chariety)
     formdata.append('deliver_time', this.state.deliverTime)
-    formdata.append('location', this.state.postLocation)
+    if(this.state.postLocation){
+        formdata.append('location', this.state.postLocation)
+    }
+
+    formdata.append('next_buy_ben', 0);
     if(this.state.selectedIndex === 2){
       formdata.append('price', this.state.price);
     }else{
@@ -146,11 +155,15 @@ export default class NewPostPage extends Component {
       .then((response) => {
         console.log(response);
         if(response.status === 201){
-          this.setState({send_loading : false, show_send_modal : false})
-          this.props.navigator.popToRoot({
-            animated: true, // does the popToRoot have transition animation or does it happen immediately (optional)
-            animationType: 'fade', // 'fade' (for both) / 'slide-horizontal' (for android) does the popToRoot have different transition animation (optional)
-          });
+
+          const resetAction = NavigationActions.reset({
+            index: 0,
+            actions: [
+              NavigationActions.navigate({ routeName: 'MyApp'})
+            ]
+          })
+          this.props.navigation.dispatch(resetAction)
+          ToastAndroid.show('پست برای بررسی ارسال شد.', ToastAndroid.LONG);
         }
         return response.json()
       })
@@ -225,7 +238,7 @@ export default class NewPostPage extends Component {
                   </ScrollView>
                   {this.state.send_loading ?
                   (
-                    <View style={{borderColor:'green',margin: 6, alignItems:'center', borderWidth: 1,borderRadius: 2, height: 40}}>
+                    <View style={{borderColor:'green',margin: 6, alignItems:'center',justifyContent:'center', borderWidth: 1,borderRadius: 2, height: 40}}>
                       <Text style={{color:'green', margin: 2}}>در حال ارسال...</Text>
                     </View>
                   ) :
@@ -268,7 +281,7 @@ export default class NewPostPage extends Component {
               <Input onChangeText={(text) => {this.setState({titleText : text})}}/>
             </Item>
             </View>
-            <Image source={{uri:this.props.navigation.state.params.data}} style={{width: 100, height:100, borderRadius: 1}}/>
+            <Image source={{uri:this.props.navigation.state.params.data[0].uri}} style={{width: 100, height:100, borderRadius: 1}}/>
           </View>
         </Card>
 
