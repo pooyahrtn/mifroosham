@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
-import {View, Text, StatusBar, Image, StyleSheet, TouchableWithoutFeedback, Alert, Modal} from 'react-native';
+import {View, Text, StatusBar, Image, StyleSheet, TouchableWithoutFeedback, Alert, Modal, TextInput, ActivityIndicator} from 'react-native';
 import { Icon } from 'react-native-elements';
 import { Container,Button , Header, Title,Spinner, Footer, Toast, Card, Content} from 'native-base';
 import {getRemainingTimeText} from '../utility/TimerUtil.js';
 import {EnglighNumberToPersian, EnglishNumberToPersianPrice} from '../utility/NumberUtils.js';
-import {buy_post_helps_url, buy_item_url} from '../serverAddress.js';
+import {buy_post_helps_url, buy_item_url, my_profile ,posts_url, auction_suggest_higher_url} from '../serverAddress.js';
 import { NavigationActions } from 'react-navigation';
 
 function getCurrentPrice(start_date,end_date ,real_price, start_price){
@@ -31,6 +31,13 @@ export default class BuyItemPage extends Component {
       agree : false,
       show_success_modal: false,
       confirm_code : 0,
+      remaining_money : undefined,
+      load_profile_error : false,
+      show_higher_suggest : false,
+      auction_higher_suggest : undefined,
+      auction_error_text: ' ',
+      auction_highest_suggest : this.post.auction.highest_suggest,
+      loading_auction_higher_suggest : false,
     }
     if (this.post.post_type === 2) {
       this.state = {...this.state, auction_remaining_time: 0}
@@ -65,6 +72,7 @@ export default class BuyItemPage extends Component {
     fetch(buy_post_helps_url).then((response) => {
       return response.json()
     }).then((resjson) =>{this.setState({buy_post_helps: resjson})}).catch((error) => console.error(error, 'shit this fuck'))
+    this.getMyProfileData()
   }
 
     componentWillUnmount(){
@@ -81,6 +89,10 @@ export default class BuyItemPage extends Component {
                 type: 'danger'
               })
         return;
+      }
+      if(this.post.post_type === 2){
+        this.setState({show_higher_suggest : true})
+        return
       }
       console.log(this.token);
       console.log(this.post.uuid);
@@ -133,6 +145,125 @@ export default class BuyItemPage extends Component {
 
 
     }
+  getMyProfileData = ()=>{
+    fetch(my_profile,{
+       method: 'GET',
+       headers: {
+         'Accept': 'application/json',
+         'Content-Type': 'application/json',
+         'Authorization': 'Token ' + this.token
+       }
+     })
+     .then((res) => res.json()).then(
+      (resjes) => {this.setState({remaining_money: resjes.money, load_profile_error:false})}
+    ).catch(
+      (error) =>{
+        //TODO: send error to server
+        this.setState({load_profile_error : true})
+      }
+    )
+  }
+
+  myMoneyButtonPressed = ()=>{
+    if(this.state.load_profile_error){
+      this.getMyProfileData()
+    }else{
+
+    }
+  }
+
+  auctionSuggestHigher = ()=>{
+    if(!this.state.auction_higher_suggest){
+      this.setState({auction_error_text:'پیشنهاد نمیتواند خالی باشد.'})
+    }else{
+      min_value = 0
+      if(this.post.auction_higher_suggest){
+        min_value = this.state.auction_highest_suggest
+      }else{
+        min_value = this.post.auction.base_money
+      }
+      if(this.state.auction_higher_suggest < min_value){
+        this.setState({auction_error_text:'پیشنهاد داده شده از بالاترین پیشنهاد کمتر است.'})
+      }else{
+        fetch(auction_suggest_higher_url,  {
+           method: 'POST',
+           headers: {
+             'Accept': 'application/json',
+             'Content-Type': 'application/json',
+             'Authorization': 'Token ' + this.token
+           },
+           body: JSON.stringify({
+             post_uuid : this.post.uuid,
+             reposter_username : this.reposter,
+             higher_suggest : this.state.auction_higher_suggest
+           })
+         }).then( res => {
+           if(res.status === 406){
+             Alert.alert('خطا', 'موجودی حساب شما کافی نیست.')
+             return
+           }
+           if(res.status === 201){
+             this.setState({show_success_modal: true})
+             return res.json()
+           }
+           if(res.status === 403){
+             Toast.show({
+                     text: 'این پست دیگر موجود نیست.',
+                     position: 'bottom',
+                     duration : 3000,
+                   })
+             const resetAction = NavigationActions.reset({
+               index: 0,
+               actions: [
+                 NavigationActions.navigate({ routeName: 'MyApp'})
+               ]
+             })
+             this.props.navigation.dispatch(resetAction)
+           }else if(res.status === 413){
+             this.setState({auction_suggest_higher:'پیشنهاد شما کمتر از بالاترین پیشنهاد است.'})
+           }
+         }).then(
+           (resjes) =>{
+             this.setState({confirm_code: resjes.confirm_code, show_success_modal:true})
+           }
+         ).catch(error => {
+           Toast.show({
+                   text: 'خطایی بوجود آمد',
+                   position: 'bottom',
+                   duration : 3000,
+                   type: 'danger'
+                 })
+         })
+
+      }
+    }
+  }
+
+  refreshHighestSuggest = ()=>{
+    this.setState({loading_auction_higher_suggest: true})
+    fetch(posts_url+this.post.uuid,  {
+       method: 'GET',
+       headers: {
+         'Accept': 'application/json',
+         'Content-Type': 'application/json',
+         'Authorization': 'Token ' + this.token
+       }
+     }).then( res => {
+       this.setState({loading_auction_higher_suggest: false})
+       return res.json();
+     }).then(
+       (resjes) =>{
+         this.setState({auction_highest_suggest: resjes.auction.highest_suggest})
+       }
+     ).catch(error => {
+       Toast.show({
+               text: 'خطایی بوجود آمد',
+               position: 'bottom',
+               duration : 3000,
+               type: 'danger'
+             })
+     })
+  }
 
   render(){
     return(
@@ -145,7 +276,15 @@ export default class BuyItemPage extends Component {
           >
           <View style={{flex: 1, justifyContent:'center', backgroundColor:'rgba(0, 0, 0, 0.70)'}}>
             <View style={{padding: 2, margin: 10, backgroundColor:'white', borderRadius: 5}}>
-              <Text style={{fontWeight:'bold', textAlign:'center', color:'green'}}>آگهی مورد نظر خریده شد.</Text>
+              {this.post.post_type === 2 ?
+                (
+                  <Text style={{fontWeight:'bold', textAlign:'center', color:'green'}}>پیشنهاد بالاتر درج شد</Text>
+                )
+                :
+                (
+                  <Text style={{fontWeight:'bold', textAlign:'center', color:'green'}}>آگهی مورد نظر خریده شد.</Text>
+                )}
+
               <Text style={{fontWeight:'bold', textAlign:'center', color:'green', margin: 5}}>
                 <Text style={{textDecorationLine:'underline'}}>
                   <Text>کد تحویل: </Text>
@@ -169,14 +308,73 @@ export default class BuyItemPage extends Component {
             </View>
           </View>
         </Modal>
+        <Modal
+          transparent={true}
+          visible={this.state.show_higher_suggest}
+          onRequestClose={() => {this.setState({show_higher_suggest: !this.state.show_higher_suggest})}}
+          animationType="fade"
+          >
+          <View style={{flex: 1, justifyContent:'center', backgroundColor:'rgba(0, 0, 0, 0.70)'}}>
+            <View style={{padding: 2, margin: 10, backgroundColor:'white', borderRadius: 5}}>
+
+              <View style={{padding: 10,  alignItems:'center', justifyContent:'center', margin: 3, flexDirection:'row'}}>
+                <Text style={styles.priceText} >بالاترین پیشنهاد {this.state.auction_highest_suggest ?
+                   EnglishNumberToPersianPrice(this.state.auction_highest_suggest)
+                    :
+                    EnglishNumberToPersianPrice(this.post.auction.base_money)
+                   } تومان</Text>
+                {this.state.loading_auction_higher_suggest ?
+                  (<ActivityIndicator/>) : (  <Icon name='refresh' color='green' onPress={this.refreshHighestSuggest}/>)}
+
+              </View>
+              <View style={{flexDirection:'row', alignItems:'center',height: 40, borderColor: 'green', borderWidth: 1, borderRadius:2, margin:3}}>
+                <Text style={{margin:5}}>تومان</Text>
+                <TextInput
+                  style={{flex:1, textAlign:'center'}}
+                  onChangeText={(text) => this.setState({auction_higher_suggest: text, auction_error_text: ' '})}
+                  autoFocus
+                  keyboardType='numeric'
+                  placeholder='پیشنهاد شما'
+                  placeholderTextColor = 'gray'
+                />
+              </View>
+              <Text style={{padding: 5, fontWeight:'bold', color:'red'}}>{this.state.auction_error_text}</Text>
+
+              <TouchableWithoutFeedback onPress={this.auctionSuggestHigher} style={{margin: 4}}>
+                <View style={{backgroundColor:'green',margin: 3, alignItems:'center', justifyContent:'center', borderRadius: 2, height: 40}}>
+                  <Text style={{color:'#ffffff', margin: 2}}>خب</Text>
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </View>
+        </Modal>
         <Header style={{backgroundColor: '#F5F5F5'}}>
           <StatusBar
              backgroundColor="#F5F5F5"
              barStyle="dark-content"
            />
-           <View style= {{flexDirection:'column',alignItems: 'center',justifyContent: 'center' ,flex:1}}>
-               <Title style={{color:'#000000', fontWeight:'bold'}}>خرید</Title>
+           <View style={{justifyContent:'center', alignItems:'center'}}>
+              <Icon name='arrow-back' style={{padding: 5}} onPress={()=>{this.props.navigation.goBack()}}/>
            </View>
+           <View style= {{padding: 5,alignItems:'flex-start' ,justifyContent: 'center'}}>
+               <Text style={{color:'#000000', fontWeight:'bold', fontSize: 16}}>خرید</Text>
+           </View>
+           <Button success onPress={this.myMoneyButtonPressed} style={{flex:1}}>
+              {this.state.load_profile_error && (
+                <Icon name='refresh' color='white'/>
+              )}
+              {this.state.remaining_money &&
+                <View style={{flexDirection:'row', justifyContent:'center', alignItems:'center'}}>
+                  <Text style={{color:'white', fontWeight:'bold'}}>
+                    <Text>موجودی </Text>
+                    <Text>{EnglighNumberToPersian(this.state.remaining_money)}</Text>
+                    <Text> تومان</Text>
+                  </Text>
+                  <Icon color='white' name='add'/>
+                </View>
+              }
+
+           </Button>
         </Header>
         <Content>
           <Card>
@@ -186,17 +384,30 @@ export default class BuyItemPage extends Component {
                     <Text style={{fontWeight:'bold', color:'green',  textAlign:'center'}}>{this.post.title}</Text>
                   </View>
 
-                  <View style={{borderWidth:1, borderColor:'green', borderRadius: 2, justifyContent:'center', alignItems:'center', flex:1}}>
-                    {this.post.post_type === 1 ?
-                      <Text style={styles.priceText}>{EnglishNumberToPersianPrice(this.state.discound_current_price)} تومان</Text>
-                      :
-                      <Text style={styles.priceText} >{EnglishNumberToPersianPrice(this.post.price)} تومان</Text>
-                    }
+                  <View style={{borderWidth:1, margin:4, borderColor:'green', borderRadius: 2, justifyContent:'center', alignItems:'center', flex:1}}>
+                    {this.post.post_type === 2 ?
+                    (
+                      <Text style={styles.priceText} >بالاترین پیشنهاد {this.state.auction_highest_suggest ?
+                         EnglishNumberToPersianPrice(this.state.auction_highest_suggest)
+                          :
+                          EnglishNumberToPersianPrice(this.post.auction.base_money)
+                         } تومان</Text>
+                    ) :
+                     (
+                     this.post.post_type === 1 ?
+                       <Text style={styles.priceText}>{EnglishNumberToPersianPrice(this.state.discound_current_price)} تومان</Text>
+                       :
+                       <Text style={styles.priceText} >{EnglishNumberToPersianPrice(this.post.price)} تومان</Text>
+
+                    )}
+
                   </View>
 
               </View>
+            <Card style={{flex:0}}>
+              <Image style={{height: 90, width: 90, borderRadius:1}} source={{uri:this.post.image_url_0}}/>
+            </Card>
 
-              <Image style={{height: 90, width: 90}} source={{uri:this.post.image_url_0}}/>
             </View>
             <View style={{flexDirection:'row', padding: 5, alignItems:'center'}}>
               <View style={{flex:1}}>
@@ -210,6 +421,20 @@ export default class BuyItemPage extends Component {
 
               <Icon name='access-time' style={{margin: 4}}/>
             </View>
+            {this.post.post_type === 2 && this.state.buy_post_helps &&
+
+
+              <View style={styles.warningContainer}>
+                <View style={{flex:1}}>
+                  <Text style={{fontWeight:'bold',}}>مزایده</Text>
+                  <Text >{this.state.buy_post_helps.auction}</Text>
+                </View>
+
+                <Icon style={{margin:4}} name='arrow-upward'/>
+              </View>
+
+
+            }
             {this.post.is_charity &&
               <View style={{flexDirection:'row', padding: 5, alignItems:'center'}}>
                 <View style={{flex:1}}>
@@ -243,6 +468,17 @@ export default class BuyItemPage extends Component {
                 <Icon name='phone' style={{margin: 4}}/>
               </View>
             }
+            {this.state.buy_post_helps && this.post.post_type === 1&&
+
+              <View style={styles.warningContainer}>
+                <View style={{flex:1}}>
+                  <Text style={{fontWeight:'bold'}}>تخفیف زمان</Text>
+                  <Text >{this.state.buy_post_helps.discount}</Text>
+                </View>
+                <Text style={{fontWeight:'bold', fontSize:23, color:'black', margin:4}}>%</Text>
+              </View>
+            }
+
             {this.state.buy_post_helps &&
               <TouchableWithoutFeedback onPress={()=>{this.setState({agree: !this.state.agree})}}>
                 <View style={{flexDirection:'row', padding:5, alignItems:'center'}}>
@@ -255,13 +491,21 @@ export default class BuyItemPage extends Component {
                 </View>
               </TouchableWithoutFeedback>
             }
-      
+
           </Card>
 
         </Content>
         <Footer style={{backgroundColor: 'transparent'}}>
           <Button block success={this.state.agree} disabled={!this.state.agree} onPress={this.buyItem} style={{flex:1, margin: 4}}>
-            <Text style={{color:'#ffffff', margin: 2}}>تکمیل خرید</Text>
+            {this.post.post_type !== 2 ?
+              (
+                <Text style={{color:'#ffffff', margin: 2}}>تکمیل خرید</Text>
+              )
+              :
+              (
+                <Text style={{color:'#ffffff', margin: 2}}>پیشنهاد بالاتر</Text>
+              )}
+
             <Icon color='#ffffff' name='done' />
 
           </Button>
@@ -277,4 +521,7 @@ const styles = StyleSheet.create({
   priceText :{
     fontWeight:'bold', color:'green'
   },
-})
+  warningContainer:{
+    flexDirection:'row',
+    padding:5}
+  })

@@ -259,6 +259,7 @@ componentDidMount(){
                 <Text style={styles.priceText} >{EnglishNumberToPersianPrice(this.props.post.price)} تومان</Text>
               }
               <Icon type='evilicon'  name='cart' color='#ffffff' size={28}/>
+              {this.props.post.post_type === 1 && <Text style={{fontWeight:'100', fontSize:16, color:'white', padding:0, margin:0}}>%</Text>}
             </View>
           </TouchableNativeFeedback>
          }
@@ -268,10 +269,14 @@ componentDidMount(){
         {this.props.post.post_type === 2 &&
           <View style={styles.cardItemRow}>
             <TouchableNativeFeedback
-              onPress={()=>{}}
+              onPress={()=>{
+                if(this.props.buyable){
+                  this.props.setSelectedItemToBuy(this.props.post, this.props.reposter)
+                }
+              }}
               background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
 
-              <View style={this.state.auction_remaining_time.enabled?styles.auctionBuyButton:styles.auctionBuyButtonDisabled}>
+              <View style={(this.state.auction_remaining_time.enabled && this.props.buyable)?styles.auctionBuyButton:styles.auctionBuyButtonDisabled}>
                 <Text style={styles.priceText} >بالاترین پیشنهاد {this.props.post.auction.highest_suggest ?
                    EnglishNumberToPersianPrice(this.props.post.auction.highest_suggest)
                     :
