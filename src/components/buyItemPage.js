@@ -36,11 +36,11 @@ export default class BuyItemPage extends Component {
       show_higher_suggest : false,
       auction_higher_suggest : undefined,
       auction_error_text: ' ',
-      auction_highest_suggest : this.post.auction.highest_suggest,
+
       loading_auction_higher_suggest : false,
     }
     if (this.post.post_type === 2) {
-      this.state = {...this.state, auction_remaining_time: 0}
+      this.state = {...this.state, auction_remaining_time: 0,  auction_highest_suggest : this.post.auction.highest_suggest,}
     }else if (this.post.post_type === 1) {
       this.state = {...this.state, discound_current_price: 0};
     }
@@ -293,6 +293,7 @@ export default class BuyItemPage extends Component {
               </Text>
               {this.state.buy_post_helps && <Text style={{margin:5}}>{this.state.buy_post_helps.confirm_code}</Text>}
               <TouchableWithoutFeedback onPress={()=>{
+                this.setState({show_success_modal:false, show_higher_suggest :false})
                 const resetAction = NavigationActions.reset({
                   index: 0,
                   actions: [
@@ -308,46 +309,49 @@ export default class BuyItemPage extends Component {
             </View>
           </View>
         </Modal>
-        <Modal
-          transparent={true}
-          visible={this.state.show_higher_suggest}
-          onRequestClose={() => {this.setState({show_higher_suggest: !this.state.show_higher_suggest})}}
-          animationType="fade"
-          >
-          <View style={{flex: 1, justifyContent:'center', backgroundColor:'rgba(0, 0, 0, 0.70)'}}>
-            <View style={{padding: 2, margin: 10, backgroundColor:'white', borderRadius: 5}}>
+        {this.post.post_type === 2 &&
+          <Modal
+            transparent={true}
+            visible={this.state.show_higher_suggest}
+            onRequestClose={() => {this.setState({show_higher_suggest: !this.state.show_higher_suggest})}}
+            animationType="fade"
+            >
+            <View style={{flex: 1, justifyContent:'center', backgroundColor:'rgba(0, 0, 0, 0.70)'}}>
+              <View style={{padding: 2, margin: 10, backgroundColor:'white', borderRadius: 5}}>
 
-              <View style={{padding: 10,  alignItems:'center', justifyContent:'center', margin: 3, flexDirection:'row'}}>
-                <Text style={styles.priceText} >بالاترین پیشنهاد {this.state.auction_highest_suggest ?
-                   EnglishNumberToPersianPrice(this.state.auction_highest_suggest)
-                    :
-                    EnglishNumberToPersianPrice(this.post.auction.base_money)
-                   } تومان</Text>
-                {this.state.loading_auction_higher_suggest ?
-                  (<ActivityIndicator/>) : (  <Icon name='refresh' color='green' onPress={this.refreshHighestSuggest}/>)}
+                <View style={{padding: 10,  alignItems:'center', justifyContent:'center', margin: 3, flexDirection:'row'}}>
+                  <Text style={styles.priceText} >بالاترین پیشنهاد {this.state.auction_highest_suggest ?
+                     EnglishNumberToPersianPrice(this.state.auction_highest_suggest)
+                      :
+                      EnglishNumberToPersianPrice(this.post.auction.base_money)
+                     } تومان</Text>
+                  {this.state.loading_auction_higher_suggest ?
+                    (<ActivityIndicator/>) : (  <Icon name='refresh' color='green' onPress={this.refreshHighestSuggest}/>)}
 
-              </View>
-              <View style={{flexDirection:'row', alignItems:'center',height: 40, borderColor: 'green', borderWidth: 1, borderRadius:2, margin:3}}>
-                <Text style={{margin:5}}>تومان</Text>
-                <TextInput
-                  style={{flex:1, textAlign:'center'}}
-                  onChangeText={(text) => this.setState({auction_higher_suggest: text, auction_error_text: ' '})}
-                  autoFocus
-                  keyboardType='numeric'
-                  placeholder='پیشنهاد شما'
-                  placeholderTextColor = 'gray'
-                />
-              </View>
-              <Text style={{padding: 5, fontWeight:'bold', color:'red'}}>{this.state.auction_error_text}</Text>
-
-              <TouchableWithoutFeedback onPress={this.auctionSuggestHigher} style={{margin: 4}}>
-                <View style={{backgroundColor:'green',margin: 3, alignItems:'center', justifyContent:'center', borderRadius: 2, height: 40}}>
-                  <Text style={{color:'#ffffff', margin: 2}}>خب</Text>
                 </View>
-              </TouchableWithoutFeedback>
+                <View style={{flexDirection:'row', alignItems:'center',height: 40, borderColor: 'green', borderWidth: 1, borderRadius:2, margin:3}}>
+                  <Text style={{margin:5}}>تومان</Text>
+                  <TextInput
+                    style={{flex:1, textAlign:'center'}}
+                    onChangeText={(text) => this.setState({auction_higher_suggest: text, auction_error_text: ' '})}
+                    autoFocus
+                    keyboardType='numeric'
+                    placeholder='پیشنهاد شما'
+                    placeholderTextColor = 'gray'
+                  />
+                </View>
+                <Text style={{padding: 5, fontWeight:'bold', color:'red'}}>{this.state.auction_error_text}</Text>
+
+                <TouchableWithoutFeedback onPress={this.auctionSuggestHigher} style={{margin: 4}}>
+                  <View style={{backgroundColor:'green',margin: 3, alignItems:'center', justifyContent:'center', borderRadius: 2, height: 40}}>
+                    <Text style={{color:'#ffffff', margin: 2}}>خب</Text>
+                  </View>
+                </TouchableWithoutFeedback>
+              </View>
             </View>
-          </View>
-        </Modal>
+          </Modal>
+        }
+
         <Header style={{backgroundColor: '#F5F5F5'}}>
           <StatusBar
              backgroundColor="#F5F5F5"
@@ -363,11 +367,11 @@ export default class BuyItemPage extends Component {
               {this.state.load_profile_error && (
                 <Icon name='refresh' color='white'/>
               )}
-              {this.state.remaining_money &&
+              {this.state.remaining_money > -1 &&
                 <View style={{flexDirection:'row', justifyContent:'center', alignItems:'center'}}>
                   <Text style={{color:'white', fontWeight:'bold'}}>
                     <Text>موجودی </Text>
-                    <Text>{EnglighNumberToPersian(this.state.remaining_money)}</Text>
+                    <Text>{EnglishNumberToPersianPrice(this.state.remaining_money)}</Text>
                     <Text> تومان</Text>
                   </Text>
                   <Icon color='white' name='add'/>

@@ -5,7 +5,8 @@ import Welcome from './components/welcome.js';
 import Main from './components/main.js';
 import Root from './components/root.js';
 import RepoList from './components/repolist.js';
-import InboxPage from './components/inboxPage.js';
+import SoldPage from './components/SoldPage.js';
+import BoughtPage from './components/BoughtPage.js';
 import ProfilePageWithHeader from './components/profilePageWithHeader.js';
 import TakePhotoPage from './components/takePhotoPage.js';
 import NewPostPage from './components/newPostPage.js';
@@ -22,7 +23,37 @@ import {Icon} from 'react-native-elements'
 import {NavigationComponent} from 'react-native-material-bottom-navigation'
 
 
+const InboxTabPage = TabNavigator({
+  SoldPage:{
+    screen: SoldPage,
+  },
+  BoughtPage: {
+    screen: BoughtPage,
+  }
 
+}, {
+
+
+  tabBarPosition: 'top',
+
+  tabBarOptions: {
+     showIcon :true,
+     shifting : true,
+     activeTintColor : 'black',
+     inactiveTintColor: '#707070',
+     labelStyle: {
+      fontSize: 16,
+      fontWeight:'bold'
+    },
+     style: {
+      backgroundColor: '#F5F5F5',
+    },
+    indicatorStyle : {
+      backgroundColor:'#707070'
+    }
+   }
+
+});
 
 const MyApp = TabNavigator({
   Main: {
@@ -84,6 +115,9 @@ const routeConfigs = {
   },
   BuyItemPage:{
     screen: BuyItemPage,
+  },
+  InboxTabPage:{
+    screen: InboxTabPage
   }
 
 }

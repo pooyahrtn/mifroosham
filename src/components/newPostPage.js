@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import {View, Alert, StyleSheet, Image, Dimensions, Text, TouchableWithoutFeedback, TextInput, Modal, ScrollView, ActivityIndicator, ToastAndroid} from 'react-native';
 import { Icon, ButtonGroup} from 'react-native-elements';
-import { Container,Button ,Content, Header,Footer, Title, Card,Item, Input, Label} from 'native-base';
+import { Container,Button ,Content, Header,Footer, Title, Card, Label} from 'native-base';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {capturedImagePath} from '../actions/index.js';
@@ -174,6 +174,28 @@ export default class NewPostPage extends Component {
         console.error(error);
       });
   }
+  changeEndTime = (increaseValue) =>{
+    this.setState(
+      (prevState, props) =>{
+        if(increaseValue === -1 && prevState.end_time === 1){
+          return {end_time: prevState.end_time}
+        }else{
+          return {end_time : prevState.end_time+ increaseValue}
+        }
+      }
+    )
+  }
+  changeDeliverTime = (increaseValue) =>{
+    this.setState(
+      (prevState, props) =>{
+        if(increaseValue === -1 && prevState.deliverTime === 1){
+          return {deliverTime: prevState.deliverTime}
+        }else{
+          return {deliverTime : prevState.deliverTime+ increaseValue}
+        }
+      }
+    )
+  }
 
   render(){
     return(
@@ -276,10 +298,9 @@ export default class NewPostPage extends Component {
         <Card>
           <View style={{flexDirection:'row', alignItems:'flex-end', padding:3}}>
             <View style={{flex:1}}>
-            <Item floatingLabel>
-              <Label>عنوان محصول</Label>
-              <Input onChangeText={(text) => {this.setState({titleText : text})}}/>
-            </Item>
+
+            <TextInput returnKeyType='next' placeholderTextColor='gray' placeholder='عنوان' style={{borderRadius:2, borderColor:'#E0E0E0', borderWidth:1, marginRight:3}} onChangeText={(text) => {this.setState({titleText : text})}}/>
+
             </View>
             <Image source={{uri:this.props.navigation.state.params.data[0].uri}} style={{width: 100, height:100, borderRadius: 1}}/>
           </View>
@@ -303,8 +324,8 @@ export default class NewPostPage extends Component {
               <View style={{padding:9, flexDirection:'row', alignItems:'center'}}>
                 {this.state.selectedIndex === 0 &&   <Icon name='question' type='evilicon'  style={styles.changeTimePlusText} onPress={()=>{this.setState({show_help_modal:true, selected_help:'auction'})}}/>}
                 {this.state.selectedIndex === 1 &&   <Icon name='question' type='evilicon'  style={styles.changeTimePlusText} onPress={()=>{this.setState({show_help_modal:true, selected_help:'discount'})}}/>}
-                <Icon type='evilicon' name='minus' style={styles.changeTimePlusText} onPress={()=>{this.setState({end_time: this.state.end_time - 1})}}/>
-                <Icon type='evilicon' name='plus' style={styles.changeTimePlusText} onPress={()=>{this.setState({end_time: this.state.end_time + 1})}} />
+                <Icon type='evilicon' name='minus' style={styles.changeTimePlusText} onPress={()=>this.changeEndTime(-1)}/>
+                <Icon type='evilicon' name='plus' style={styles.changeTimePlusText} onPress={()=>this.changeEndTime(1)} />
                 <Text style={{flex:1}}>
                   <Text>زمان اتمام </Text>
                   <Text>{EnglighNumberToPersian(this.state.end_time)}</Text>
@@ -318,15 +339,15 @@ export default class NewPostPage extends Component {
           <Text style={styles.sectionTitleText}>توضیحات</Text>
           <TextInput style={{flex:1, margin: 5}} multiline={true} numberOfLines = {4}
             maxLength={350} onChangeText={(text) => this.setState({description: text})}
-            placeholder='از # برای دسته بندی استفاده کنید. مثلا #کتاب'
+            placeholder='توضیحاتی در باره ی محصول بنویسید. از # برای دسته بندی میتوانید استفاده کنید،مثلا #کتاب. شماره تماس و یا نحوه ی تحویل را هم میمی'
           />
         </Card>
         <Card>
           <View style={{padding:9, flexDirection:'row', alignItems:'center'}}>
             <Icon name='question' type='evilicon'  style={styles.changeTimePlusText} onPress={()=>{this.setState({show_help_modal:true, selected_help:'deliver_time'})}}/>
-            <Icon type='evilicon' name='minus' style={styles.changeTimePlusText} onPress={()=>{this.setState({deliverTime: this.state.deliverTime - 1})}}/>
+            <Icon type='evilicon' name='minus' style={styles.changeTimePlusText} onPress={()=>this.changeDeliverTime(-1)}/>
 
-            <Icon type='evilicon' name='plus' style={styles.changeTimePlusText} onPress={()=>{this.setState({deliverTime: this.state.deliverTime + 1})}}/>
+            <Icon type='evilicon' name='plus' style={styles.changeTimePlusText} onPress={()=>this.changeDeliverTime(1)}/>
 
             <Text style={{flex:1}}>
               <Text> مهلت تحویل</Text>
@@ -383,7 +404,7 @@ export default class NewPostPage extends Component {
                        );
                        }} >
                        <View style={{borderColor:'green',margin: 6, alignItems:'center',flex:1, borderRadius: 2, borderWidth:1}}>
-                        <Text style={{ margin: 2, color:'green'}}>انتخاب محل فروش</Text>
+                        <Text style={{ margin: 2, color:'green'}}>انتخاب منطقه فروشنده</Text>
                        </View>
 
                        </TouchableWithoutFeedback>
@@ -454,10 +475,9 @@ function PriceMode(params){
     return(
       <View style={styles.priceContainer}>
         <Text style={{margin:5}}>تومان</Text>
-        <Item floatingLabel style={{ flex:1}}>
-          <Label>قیمت</Label>
-          <Input keyboardType='numeric' onChangeText={(text) => setState({price: text})}/>
-        </Item>
+
+        <TextInput placeholderTextColor='gray' placeholder='قیمت' keyboardType='numeric' style={styles.priceTextInput} onChangeText={(text) => setState({price: text})}/>
+
         <Icon style={{margin:5}} name='credit-card'/>
       </View>
     )
@@ -466,18 +486,16 @@ function PriceMode(params){
       <View>
         <View style={styles.priceContainer}>
           <Text style={{margin:5}}>تومان</Text>
-          <Item floatingLabel style={{ flex:1}}>
-            <Label>قیمت شروع</Label>
-            <Input keyboardType='numeric' onChangeText={(text) => setState({price: text})}/>
-          </Item>
+
+          <TextInput placeholderTextColor='gray' placeholder='قیمت شروع' keyboardType='numeric' style={styles.priceTextInput}  onChangeText={(text) => setState({price: text})}/>
+
           <Icon style={{margin:5}} name='credit-card'/>
         </View>
         <View style={styles.priceContainer}>
           <Text style={{margin:5}}>تومان</Text>
-          <Item floatingLabel style={{ flex:1}}>
-            <Label>قیمت پایان</Label>
-            <Input keyboardType='numeric' onChangeText={(text) => setState({end_price: text})}/>
-          </Item>
+
+          <TextInput placeholderTextColor='gray' placeholder='قیمت پایان' style={styles.priceTextInput}  keyboardType='numeric' onChangeText={(text) => setState({end_price: text})}/>
+
           <Icon style={{margin:5}} name='credit-card'/>
         </View>
       </View>
@@ -486,10 +504,9 @@ function PriceMode(params){
     return(
        <View style={styles.priceContainer}>
         <Text style={{margin:5}}>تومان</Text>
-        <Item floatingLabel style={{ flex:1}}>
-          <Label>قیمت پایه</Label>
-          <Input keyboardType='numeric' onChangeText={(text) => setState({price: text})}/>
-        </Item>
+
+        <TextInput placeholderTextColor='gray' placeholder='قیمت پایه' style={styles.priceTextInput}  keyboardType='numeric' onChangeText={(text) => setState({price: text})}/>
+
         <Icon style={{margin:5}} name='credit-card'/>
       </View>
     )
@@ -498,16 +515,23 @@ function PriceMode(params){
 
 const styles = StyleSheet.create({
   priceContainer:{
-    padding:3,
+    padding:1,
+    margin:5,
     flexDirection:'row',
-    alignItems:'flex-end'
+    alignItems:'flex-end',
+    borderColor:'#E0E0E0',
+    borderWidth:1,
+    borderRadius:2
+  },
+  priceTextInput:{
+    flex:1,
   },
   postButton:{
     flex:1
   },
   changeTimePlusText:{
-    padding : 5,
-    marginRight:25
+    padding : 10,
+    marginRight:15
   },
   errorText:{
     color:'red',

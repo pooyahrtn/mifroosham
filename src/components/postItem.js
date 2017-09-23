@@ -200,12 +200,15 @@ componentDidMount(){
 
         <View style={styles.cardItemRow}>
           {this.props.post.ads_included &&
-            <View style={{flexDirection:'row', alignItems:'center'}}>
-              <Text style={styles.likeText}>{EnglighNumberToPersian(this.props.post.total_invested_qeroons)}</Text>
-              <View style={{padding:1, width:19, height:19, margin:2 ,borderColor:'#000000', borderRadius: 9, borderWidth: 1, alignItems:'center', justifyContent:'flex-end'}}>
-                <Text style={{color:'#000000', fontWeight:'100', fontSize:12}}>ق</Text>
+            <TouchableWithoutFeedback onPress={()=>this.props.showInvestModal(this.props.post)}>
+              <View style={{flexDirection:'row', alignItems:'center'}}>
+                <Text style={styles.likeText}>{EnglighNumberToPersian(this.props.post.total_invested_qeroons)}</Text>
+                <View style={{padding:1, width:19, height:19, margin:2 ,borderColor:'#000000', borderRadius: 9, borderWidth: 1, alignItems:'center', justifyContent:'flex-end'}}>
+                  <Text style={{color:'#000000', fontWeight:'100', fontSize:12}}>ق</Text>
+                </View>
               </View>
-            </View>
+            </TouchableWithoutFeedback>
+
           }
           <Text style={styles.likeText}>{EnglighNumberToPersian(this.state.n_reposts)}</Text>
           <Icon type='evilicon'  name='retweet' color={repost_color} style={styles.imageButtons} size={28} onPress={this.repostPost}/>
@@ -270,7 +273,7 @@ componentDidMount(){
           <View style={styles.cardItemRow}>
             <TouchableNativeFeedback
               onPress={()=>{
-                if(this.props.buyable){
+                if(this.props.buyable && this.state.auction_remaining_time.enabled){
                   this.props.setSelectedItemToBuy(this.props.post, this.props.reposter)
                 }
               }}
@@ -433,7 +436,7 @@ const styles = StyleSheet.create({
      alignItems: 'center',
      borderRadius: 5,
      justifyContent: 'center',
-     backgroundColor: '#424242'
+     backgroundColor: '#9E9E9E'
      },
    auctionTimerContainer: {
     flex:1,

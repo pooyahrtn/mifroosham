@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
-import {View, Modal, TouchableHighlight,FlatList, ActivityIndicator, AsyncStorage, Alert, PermissionsAndroid} from 'react-native';
+import {View, Modal, TouchableHighlight,FlatList, ActivityIndicator,
+  AsyncStorage, Alert, PermissionsAndroid, Text, TextInput, TouchableWithoutFeedback, StatusBar} from 'react-native';
 import { Icon } from 'react-native-elements';
 import PostItem from './postItem.js';
-import {Container, Header, Title} from 'native-base';
-import {base_url, read_feeds_url} from '../serverAddress.js';
+import {Container, Header, Title, Toast} from 'native-base';
+import {base_url, read_feeds_url, invest_helps_url, request_invest_url, posts_url} from '../serverAddress.js';
 import BuyItemPage from './buyItemPage.js';
-
+import {EnglighNumberToPersian} from '../utility/NumberUtils.js'
 
 
 export default class Main extends Component{
@@ -27,8 +28,14 @@ export default class Main extends Component{
       token : null,
       visit_version : 0,
       current_location : undefined,
-      selected_item_to_buy : undefined,
-      show_send_modal : false,
+      show_invest_modal : false,
+      invest_helps : undefined,
+      selected_item_to_invest : undefined,
+      invest_loading: false,
+      requested_invest_qeroons : 0,
+      request_invest_loading : false,
+      requested_invest_qeroons_is_zero: false,
+      remaining_qeroons_are_less_than_request : false,
     };
   }
 
@@ -76,6 +83,9 @@ export default class Main extends Component{
     })
 
   }
+
+
+
   makeRemoteRequest = (token) => {
     const { page } = this.state;
     this.setState({ loading: true });
@@ -112,6 +122,7 @@ export default class Main extends Component{
         console.log(error);
       });
   };
+
 
   handleRefresh = () => {
     _uuids = []
@@ -167,6 +178,8 @@ export default class Main extends Component{
       );
     };
 
+
+
   openProfilePage(user_id){
     this.props.userSelected(user_id);
   }
@@ -189,26 +202,282 @@ export default class Main extends Component{
     this.props.navigation.navigate('BuyItemPage', {post: item, token: this.state.token, reposter: reposter})
   }
 
+  showInvestModal= (item)=>{
+    this.setState({invest_loading:true, requested_invest_qeroons:0, remaining_qeroons_are_less_than_request: false })
+    fetch(invest_helps_url,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Token ' + this.state.token
+        }
+      }
+    ).then(res => res.json())
+    .then(
+      resjes =>{
+        this.setState({
+          invest_helps: resjes,
+          selected_item_to_invest: item,
+          show_invest_modal: true,
+          invest_loading: false,
+        })
+      }
+    ).catch(error =>
+      this.setState({error: error})
+    )
+
+  }
+  requestInvestOnPost =(post, qeroons) =>{
+    if(qeroons === 0){
+      this.setState({requested_invest_qeroons_is_zero: true})
+      return
+    }
+    if(this.state.request_invest_loading){
+      return
+    }
+    this.setState({request_invest_loading:true})
+    fetch(request_invest_url,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Token ' + this.state.token
+        }, body : JSON.stringify(
+          {
+            post_uuid: post.uuid,
+            value : qeroons
+          }
+        )
+      }
+    ).then(res => {
+      if(res.status === 200){
+        this.setState({request_invest_loading: false, show_invest_modal: false})
+        Toast.show({
+                text: 'سرمایه گذاری شد.',
+                position: 'bottom',
+                duration : 3000,
+                type: 'success'
+              })
+        this.updatePost(post)
+      }else if(res.status === 403){
+        this.setState({request_invest_loading: false, show_invest_modal: false})
+        Toast.show({
+                text: 'این پست خریده یا غیر فعال شده است.',
+                position: 'bottom',
+                duration : 3000,
+                type: 'danger'
+              })
+      }else if(res.status === 410){
+        this.refreshSelectedPostToInvest(post)
+        this.setState({remaining_qeroons_are_less_than_request : true})
+      }else if (res.status === 400) {
+        this.setState({request_invest_loading: false, show_invest_modal: false})
+        Toast.show({
+                text: 'خطایی بوجود آمد. لطفا مجددا تلاش کنید.',
+                position: 'bottom',
+                duration : 3000,
+                type: 'danger'
+              })
+      }
+    })
+  .catch(error =>
+      this.setState({error: error})
+    )
+  }
+
+  refreshSelectedPostToInvest = (post)=>{
+    this.setState({refreshin_selected_post_to_invest: true})
+    fetch(posts_url+post.uuid,  {
+       method: 'GET',
+       headers: {
+         'Accept': 'application/json',
+         'Content-Type': 'application/json',
+         'Authorization': 'Token ' + this.state.token
+       }
+     }).then( res => {
+       this.setState({refreshin_selected_post_to_invest: false})
+       return res.json();
+     }).then(
+       (resjes) =>{
+         this.setState({selected_item_to_invest: resjes})
+       }
+     ).catch(error => {
+       Toast.show({
+               text: 'خطایی بوجود آمد',
+               position: 'bottom',
+               duration : 3000,
+               type: 'danger'
+             })
+     })
+  }
+  updatePost = (post)=>{
+    fetch(posts_url+post.uuid,  {
+       method: 'GET',
+       headers: {
+         'Accept': 'application/json',
+         'Content-Type': 'application/json',
+         'Authorization': 'Token ' + this.state.token
+       }
+     }).then( res => {
+
+       return res.json();
+     }).then(
+       (resjes) =>{
+         this.setState((state) => {
+           // copy the map rather than modifying state.
+           const data = state.data;
+           index = data.findIndex((item) => item.post.uuid === post.uuid);
+           feed = data[index]
+           feed.post = resjes
+          //  data[index] = feed
+           data[index] = feed
+           return {data};
+         });
+       }
+     ).catch(error => {
+       Toast.show({
+               text: 'خطایی بوجود آمد',
+               position: 'bottom',
+               duration : 3000,
+               type: 'danger'
+             })
+     })
+
+  }
+
+
+
   render(){
     return(
       <View style={{flex:1}}>
-        <Modal
-          transparent={true}
-          visible={this.state.show_send_modal}
-          onRequestClose={() => {this.setState({show_send_modal: !this.state.show_send_modal})}}
-          animationType="slide"
-          >
-          <View style={{flex: 1, justifyContent:'center', backgroundColor:'rgba(0, 0, 0, 0.70)'}}/>
-        </Modal>
-        <Header androidStatusBarColor="#263238" style={{backgroundColor: '#37474F'}}>
-          <View style= {{flexDirection:'row',alignItems: 'center',justifyContent: 'flex-start' ,flex:1}} >
-            <Icon name='inbox' onPress={()=>{this.setState({show_send_modal: true})}} color='white' size={31} />
+        {this.state.invest_helps && this.state.selected_item_to_invest &&
+          <Modal
+            transparent={true}
+            visible={this.state.show_invest_modal}
+            onRequestClose={() => {this.setState({show_invest_modal: !this.state.show_invest_modal})}}
+            animationType="fade"
+            >
+            <View style={{flex: 1, justifyContent:'center', backgroundColor:'rgba(0, 0, 0, 0.70)'}}>
+              <View style={{borderRadius: 2, backgroundColor:'white', padding:5, margin: 5}}>
+                <Text style={{textAlign:'center', color:'green', fontWeight:'bold', padding: 5, margin:5}}>سرمایه گذاری</Text>
+                <Text style={{borderRadius:2,backgroundColor:'#e0e0e0',padding: 7, textAlign:'center', margin:3}}>
+                  <Text>قرون های شما: </Text>
+                  <Text>{EnglighNumberToPersian(this.state.invest_helps.your_qeroons)}</Text>
+                  <Text> قرون</Text>
+                </Text>
+                <View style={{borderRadius:2, backgroundColor:'#e0e0e0',padding: 7,  margin:3, flexDirection:'row', alignItems:'center'}}>
+                  {this.state.refreshin_selected_post_to_invest ?
+                    <ActivityIndicator/>
+                    :
+                    <Icon name='refresh' onPress = {()=> this.refreshSelectedPostToInvest(this.state.selected_item_to_invest)}/>
+                  }
+                  {this.state.selected_item_to_invest.remaining_qeroons > 0 ?
+                    (  <Text style={{flex:1 ,textAlign:'center',}} >
+                        <Text>قرون های باقی مانده ی این پست: </Text>
+                        <Text>{EnglighNumberToPersian(this.state.selected_item_to_invest.remaining_qeroons)}</Text>
+                        <Text> قرون</Text>
+                      </Text>)
+                    :
+                    (  <Text style={{flex:1 ,textAlign:'center',color:'red'}} >
+                        <Text>از این پست قرونی باقی نمانده</Text>
+                      </Text>
+                    )
+                  }
+
+                </View>
+                <View style={{borderRadius:2, backgroundColor:'#e0e0e0',padding: 7,  margin:3, flexDirection:'row', alignItems:'center'}}>
+                  {this.state.refreshin_selected_post_to_invest ?
+                    <ActivityIndicator/>
+                    :
+                    <Icon name='refresh' onPress = {()=> this.refreshSelectedPostToInvest(this.state.selected_item_to_invest)}/>
+                  }
+
+                  <Text style={{flex:1 ,textAlign:'center',}} >
+                    <Text>قرون های سرمایه گذاری شده روی پست:‌</Text>
+                    <Text>{EnglighNumberToPersian(this.state.selected_item_to_invest.total_invested_qeroons)}</Text>
+                    <Text> قرون</Text>
+                  </Text>
+                </View>
+                {this.state.selected_item_to_invest.remaining_qeroons !== 0 &&
+                  <View style={{alignItems:'center', padding: 7,margin:3, borderRadius:2, borderWidth:1, borderColor:'#e0e0e0'}}>
+                    <View style={{flexDirection:'row', alignItems:'center'}}>
+                    <Text>قرون</Text>
+                    <TextInput onChangeText={(text)=>{this.setState({requested_invest_qeroons: text, requested_invest_qeroons_is_zero:false})}}
+                      keyboardType='numeric' placeholder='مقدار سرمایه گذاری' style={{flex:1, textAlign:'center'}}/>
+                    </View>
+                    {this.state.requested_invest_qeroons > 0 &&
+                      <Text style={{fontSize:12}}>
+                        <Text>سودی که با فروش این پست بدست می آورید: </Text>
+                        <Text style={{color:'green'}}>{EnglighNumberToPersian(this.state.invest_helps.qeroon_value * this.state.requested_invest_qeroons)}</Text>
+                        <Text> تومان</Text>
+                      </Text>
+                    }
+
+                    {parseInt(this.state.requested_invest_qeroons) > this.state.invest_helps.your_qeroons &&
+                      <Text style={{color:'red', fontSize:12}}>این مقدار بیشتر از قرون های شماست.</Text>
+                    }
+                    {parseInt(this.state.requested_invest_qeroons) > this.state.selected_item_to_invest.remaining_qeroons &&
+                      <Text style={{color:'red', fontSize:12}}>این مقداری بیشتر از قرون های باقی مانده از پست است.</Text>
+                    }
+                    {this.state.requested_invest_qeroons_is_zero &&
+                      <Text style={{color:'red', fontSize:12}}>مقدار سرمایه گذاری نمیتواند صفر باشد.</Text>
+                    }
+                    {this.state.remaining_qeroons_are_less_than_request &&
+                      <Text style={{color:'red', fontSize:12}}>این مقداری بیشتر از قرون های باقی مانده از پست است.</Text>
+                    }
+                  </View>
+                }
+
+                <View style={{flexDirection:'row', padding:1}}>
+                  <TouchableWithoutFeedback onPress={()=>this.setState({show_invest_modal : false})}>
+                    <View style={{flex:1, alignItems:'center', justifyContent:'center', height:35 ,borderColor:'red',margin:2 ,borderWidth:1 ,borderRadius:2}}>
+                      <Text style={{color: 'red'}}>بیخیال</Text>
+                    </View>
+                  </TouchableWithoutFeedback>
+                  {this.state.selected_item_to_invest.remaining_qeroons > 0 &&
+                    <TouchableWithoutFeedback onPress={()=> this.requestInvestOnPost(this.state.selected_item_to_invest, this.state.requested_invest_qeroons)}>
+                      <View style={{flex:1, alignItems:'center', justifyContent:'center', height:35 ,backgroundColor:'green', margin:2 ,borderRadius:2}}>
+                        {this.state.request_invest_loading ?
+                          (
+                            <Text style={{color:'white'}}>لطفا صبر کنید</Text>
+                          ) :
+                          (
+                            <Text style={{color:'white'}}>خب</Text>
+                          )}
+
+                      </View>
+                    </TouchableWithoutFeedback>
+                  }
+
+                </View>
+
+              </View>
+            </View>
+          </Modal>
+        }
+
+        <Header style={{backgroundColor: '#F5F5F5'}}>
+          <StatusBar
+             backgroundColor="#e0e0e0"
+             barStyle="dark-content"
+           />
+          <View style= {{flexDirection:'row',alignItems: 'center',justifyContent: 'flex-start' }} >
+            <Icon name='inbox' onPress={()=>{this.props.navigation.navigate('InboxTabPage', {token: this.state.token})}} size={31} />
           </View>
-          <View style= {{flexDirection:'column',alignItems: 'center',justifyContent: 'center' ,flex:2}}>
-              <Title style={{ color: '#ffffff', fontWeight:'bold'}}>selmino</Title>
+          <View style={{width: 31}}>
           </View>
-          <View style= {{flexDirection:'column',alignItems: 'flex-end',justifyContent: 'center' ,flex:1}}>
-            <Icon name="add-circle-outline" color='#ffffff'
+          <View style= {{flexDirection:'column',alignItems: 'center',justifyContent: 'center' ,flex:1}}>
+              <Title style={{ color: 'black', fontWeight:'bold'}}>selmino</Title>
+          </View>
+          <View style={{width:31, justifyContent:'center'}}>
+            {this.state.invest_loading &&
+              <ActivityIndicator animating size="large"/>
+            }
+          </View>
+          <View style= {{flexDirection:'column',alignItems: 'flex-end',justifyContent: 'center' }}>
+            <Icon name="add-circle-outline"
              onPress={()=>{this.props.navigation.navigate('TakePhotoPage', {token: this.state.token})}}
              size={31}/>
           </View>
@@ -227,6 +496,8 @@ export default class Main extends Component{
               <PostItem
                 {...item}
                 setSelectedItemToBuy = {this.setSelectedItemToBuy}
+                updatedPosts = {this.state.updatedPosts}
+                showInvestModal = {this.showInvestModal}
                 token = {this.state.token}
                 current_location = {this.state.current_location}
                 openProfilePage = {this.props.openProfilePage}

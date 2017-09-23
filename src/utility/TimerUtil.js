@@ -1,5 +1,6 @@
 export function getRemainingTimeText(endsInTime){
-  remaining_secs = new Date(endsInTime)/1000 - new Date().getTime()/1000;
+  // I know it's bad
+  remaining_secs = new Date(endsInTime).getTime()/1000 - new Date().getTime()/1000;
   if (remaining_secs <= 0) {
     return {text: 'مهلت تمام شد.',enabled: false};
   }
@@ -18,6 +19,17 @@ export function getRemainingTimeText(endsInTime){
     time = secs;
   }
   return {text: time, enabled: true}
+}
+
+export function getRemainingDays(endInDate){
+  // I know it's bad
+  remaining_secs = endInDate/1000 - new Date().getTime()/1000;
+  if (remaining_secs <= 0) {
+    return {text: 'مهلت تمام شد.',enabled: false};
+  }
+  let days= Math.floor(remaining_secs / (60 * 60 * 24));
+  days = days + ' روز'
+  return {text: days, enabled: true}
 }
 
 export function getTimeAgo(postTime){

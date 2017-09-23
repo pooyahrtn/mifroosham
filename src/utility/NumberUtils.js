@@ -14,6 +14,9 @@ export function  EnglighNumberToPersian (englishNumber)  {
 }
 
 export function EnglishNumberToPersianPrice(englishNumber){
+  if(englishNumber === 0){
+    return "صفر"
+  }
   persianNumber = EnglighNumberToPersian(englishNumber);
 
   commaIndex = persianNumber.length - 3;
