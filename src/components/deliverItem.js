@@ -49,7 +49,8 @@ export default class DeliverItem extends PureComponent{
         <View style={{flexDirection:'row', justifyContent:'center', padding: 5}}>
           <Text style={{ flex :1}}>{this.props.post.title}</Text>
           <Text style={styles.titleText}>
-            {this.props.type === 'SO' && this.props.status === 'pe' && (<Text style={{color: '#009688'}}> فروخته شد</Text>)}
+            {this.props.type === 'SO' && this.props.status === 'pe' && this.props.post.post_type !== 2 &&  (<Text style={{color: '#009688'}}> فروخته شد</Text>)}
+            {this.props.type === 'SO' && this.props.status === 'pe' && this.props.post.post_type === 2 &&  (<Text style={{color: '#009688'}}>بالاترین پیشنهاد</Text>)}
             {this.props.type === 'BO' && this.props.status === 'pe' && this.props.post.post_type === 2 &&  (<Text style={{color: '#009688'}}>پینشهاد شما ثبت شد</Text>)}
             {this.props.type === 'BO' && this.props.status === 'pe' && this.props.post.post_type !== 2 && (<Text style={{color: '#009688'}}> خریده شد</Text>)}
             {this.props.status === 'de' && this.props.type === 'SO' &&(<Text style={{color: '#009688'}}> تحویل داده شد</Text>)}
@@ -73,19 +74,44 @@ export default class DeliverItem extends PureComponent{
                 <Text style= {styles.timeText}>{EnglighNumberToPersian(getTimeAgo(new Date(this.props.cancel_time)/1000))}</Text>
               }
 
-              <Text style={{padding: 4, flex:1, textAlign:'right'}}>{this.props.buyer.profile.full_name}</Text>
-              <Thumbnail small source={{uri: this.props.buyer.profile.avatar_url}}/>
+
+              {this.props.type === 'BO'?
+                (<Text style={{padding: 4, flex:1, textAlign:'right'}}>{this.props.post.sender.profile.full_name}</Text>)
+              :
+                (
+                  <Text style={{padding: 4, flex:1, textAlign:'right'}}>{this.props.buyer.profile.full_name}</Text>
+                )
+              }
+              {this.props.type === 'BO'?
+                (
+                  <Thumbnail small source={{uri: this.props.post.sender.profile.avatar_url}}/>
+                )
+                :
+                (
+                  <Thumbnail small source={{uri: this.props.buyer.profile.avatar_url}}/>
+                )
+              }
+
             </View>
-            {this.props.type==='SO' && ( <Text style={{paddingTop: 2, fontSize:12}}> این کالا را خریداری کرد. </Text>)}
+
             {this.props.status === 'pe' && this.props.post.post_type !== 2 &&
-              <View style={styles.timerContainer}>
+              <View style={styles.baseRectangleBorderedStyle}>
                 <Text>{EnglighNumberToPersian(this.state.remaining_time.text)}</Text>
                 <Text style={{fontSize:12}}> مهلت تحویل : </Text>
                 <Icon type='evilicon'  name='clock' color='#009688' size={20}/>
               </View>
             }
+            {this.props.status === 'ca' && this.props.auction_failed === true && this.props.type === 'BO' &&
+              <View style={styles.baseRectangleBorderedStyle}>
+                <Text> تومان</Text>
+                <Text>{EnglishNumberToPersianPrice(this.props.post.auction.highest_suggest)}</Text>
+                <Text style={{fontSize:12}}>بالاترین پیشنهاد: </Text>
+
+              </View>
+            }
+
             {this.props.status === 'pe' && this.props.post.post_type === 2 &&
-              <View style={styles.timerContainer}>
+              <View style={styles.baseRectangleBorderedStyle}>
                 {this.props.post.auction.end_time < new Date() ?
                   (
                     <Text> مهلت تحویل : </Text>
@@ -107,50 +133,73 @@ export default class DeliverItem extends PureComponent{
                 <TouchableNativeFeedback
                   onPress={()=>{this.props.deleteItem(this.props)}}
                   background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
-                  <View style={styles.deleteButton}>
+                  <View style={styles.deleteItemStyle}>
                     <Icon name='delete' color='#ffffff' size={26}/>
                   </View>
                 </TouchableNativeFeedback>
 
               )}
-              {this.props.rate_status === 'cr' &&
+              {this.props.rate_status === 'cr' && this.props.type === 'BO' &&
                 <TouchableNativeFeedback
                   onPress={()=>{this.props.showReviewModal(this.props)}}
                   background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
-                  <View style={{borderRadius : 2, backgroundColor:'green', flex:1, flexDirection:'row', alignItems:'center', justifyContent:'center' , margin:4}}>
+                  <View style={styles.blueRectangleStyle}>
                     <Text style={{color:'white'}}>امتیاز دهید</Text>
                     <Icon name='star' color='#ffffff' size={26}/>
                   </View>
                 </TouchableNativeFeedback>
               }
               {this.props.rate_status === 'ra' &&
-                <View style={{borderRadius : 2, backgroundColor:'blue', flex:1, flexDirection:'row', alignItems:'center', justifyContent:'center', margin:4}}>
-                  <Text style={{color:'white'}}>امتیاز داده شد</Text>
-                  <Icon name='star' color='#ffffff' size={26}/>
+                <TouchableNativeFeedback
+                  onPress={()=>{this.props.showReviewModal(this.props)}}
+                  background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
+                  <View style={styles.blueRectangleStyle}>
+                    <Text style={{color:'white'}}>امتیاز داده شد</Text>
+                    <Icon name='star' color='#ffffff' size={26}/>
+                  </View>
+                </TouchableNativeFeedback>
+              }
+              {this.props.rate_status === 'cr' && this.props.type === 'SO' &&
+                <View style={styles.baseRectangleBorderedStyle}>
+                  <Text style={{}}>امتیازی داده نشده</Text>
+                  <Icon name='star' size={26}/>
                 </View>
               }
-              {this.props.type === 'BO' && this.props.status === 'pe' &&
+              {this.props.status === 'pe' &&
                 <TouchableNativeFeedback
                   onPress={()=>{}}
                   background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
-                  <View style={{borderRadius : 2, backgroundColor:'green', flex:1, flexDirection:'row', alignItems:'center', justifyContent:'center' , margin:4}}>
+                  <View style={styles.greenRectangleStyle}>
                     <Text style={{color:'white'}}>تماس</Text>
                     <Icon name='phone' color='#ffffff' size={26}/>
                   </View>
                 </TouchableNativeFeedback>
 
               }
+
+              {this.props.status === 'pe' && this.props.type === 'SO' &&
+                <TouchableNativeFeedback
+                  onPress={()=>{this.props.auctionSuggestHigher(this.props)}}
+                  background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
+                  <View style={styles.redRectangleStyle}>
+                    <Text style={{color:'white'}}>لغو فروش</Text>
+                    <Icon name='clear' color='#ffffff' />
+                  </View>
+                </TouchableNativeFeedback>
+              }
+              {this.props.type === 'BO' && this.props.status === 'ca' && this.props.auction_failed === true &&
+                <TouchableNativeFeedback
+                  onPress={()=>{this.props.auctionSuggestHigher(this.props)}}
+                  background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
+                  <View style={styles.greenRectangleStyle}>
+                    <Text style={{color:'white'}}>پیشنهاد بالاتر</Text>
+                    <Icon name='arrow-upward' color='#ffffff' size={26}/>
+                  </View>
+                </TouchableNativeFeedback>
+
+              }
               {this.props.type === 'BO' && this.props.status === 'pe' &&
-                <View style = {{ padding:3,
-                 margin:4,
-                 flexDirection:'row',
-                 alignItems: 'center',
-                 borderRadius: 2,
-                 borderWidth: 1,
-                 justifyContent: 'center',
-                 borderColor: '#009688',
-                 flex:2
-                }}>
+                <View style={styles.baseRectangleBorderedStyle}>
                   <Text>
                     <Text>کد تحویل: </Text>
                     <Text>{this.props.confirm_code}</Text>
@@ -163,9 +212,30 @@ export default class DeliverItem extends PureComponent{
 
           </View>
 
-          <Image style={{height: 90, width : 90, borderRadius:2, margin: 2}} source={{uri: this.props.post.image_url_0}}/>
+          <Image style={{height: 101, width : 101, borderRadius:2, margin: 2}} source={{uri: this.props.post.image_url_0}}/>
 
         </View>
+          <View style={{flexDirection:'row'}}>
+            {this.props.post.post_type === 2 && this.props.type === 'SO' &&
+              <View style={styles.baseRectangleBorderedStyle}>
+                <Text> تومان</Text>
+                <Text>{EnglishNumberToPersianPrice(this.props.post.auction.highest_suggest)}</Text>
+                <Text style={{fontSize:12}}>مبلغ پیشنهاد: </Text>
+
+              </View>
+            }
+            {this.props.type === 'SO' && this.props.status === 'pe' &&
+              <TouchableNativeFeedback
+                onPress={()=>{this.props.showDeliverModal(this.props)}}
+                background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
+                <View style={styles.blueRectangleStyle}>
+                  <Text style={{color:'white'}}>تحویل</Text>
+                  <Icon name='done' color='#ffffff' size={26}/>
+                </View>
+              </TouchableNativeFeedback>
+            }
+          </View>
+
           {this.props.type == 'BO' && this.props.status == 'ca' &&
             <Text style={{padding: 5, color:'green'}}>
               <Text>مبلغ </Text>
@@ -189,10 +259,28 @@ export default class DeliverItem extends PureComponent{
           }
 
           {this.props.type == 'BO' && this.props.status == 'de' && this.props.post.total_invested_qeroons > 0 &&
-            <Text style={{padding: 5, color:'green'}}>
-              <Text>{EnglighNumberToPersian(this.props.post.total_invested_qeroons)}</Text>
-              <Text>قرون به حساب شما اضافه شد.</Text>
-            </Text>
+            <View style={styles.baseRectangleBorderedStyle}>
+              <Text style={{padding: 5, color:'green'}}>
+                <Text>{EnglighNumberToPersian(this.props.post.total_invested_qeroons)}</Text>
+                <Text>قرون به حساب شما اضافه شد.</Text>
+              </Text>
+              <View style={{flexDirection:'row', alignItems:'center'}}>
+                <Text style={styles.likeText}>{EnglighNumberToPersian(this.props.post.total_invested_qeroons)}</Text>
+                <View style={{padding:1, width:19, height:19, margin:2 ,borderColor:'#000000', borderRadius: 9, borderWidth: 1, alignItems:'center', justifyContent:'flex-end'}}>
+                  <Text style={{color:'#000000', fontWeight:'100', fontSize:12}}>ق</Text>
+                </View>
+              </View>
+            </View>
+          }
+          {this.props.type == 'SO' && this.props.status == 'de' &&
+            <View style={styles.baseRectangleBorderedStyle}>
+              <Text style={{padding: 5, color:'green', flex:1}}>
+                <Text>{EnglighNumberToPersian(this.props.suspended_money)}</Text>
+                <Text> تومان به حساب شما اضافه شد.</Text>
+              </Text>
+              <Icon name='credit-card'/>
+            </View>
+
           }
 
         </View>
@@ -202,66 +290,48 @@ export default class DeliverItem extends PureComponent{
     )
   }
 }
+const baseRectangleStyle = {
+  padding: 5,
+  borderRadius : 2,
+  flex:1,
+  flexDirection:'row',
+  alignItems:'center',
+  justifyContent:'center' ,
+  margin:4
+}
 
 const styles = StyleSheet.create({
   titleText :{
     fontWeight: 'bold',
     fontSize: 15
   },
-  callBuyerButton:{
-    flex:1,
-    backgroundColor:'#00838F',
-    flexDirection:'row',
-    margin: 3,
-    padding:5,
-    alignItems: 'center',
-    borderRadius: 5,
-    justifyContent: 'center',
-  },
-  deleteButton:{
-    backgroundColor:'#BDBDBD',
-    flexDirection:'row',
-    margin: 4,
-    padding:1,
-    alignItems: 'center',
-    borderRadius: 2,
-    justifyContent: 'center',
-  },
-  confirmDeliver:{
-    flex:1,
-    backgroundColor:'#C2185B',
-    flexDirection:'row',
-    margin: 3,
-    padding:5,
-    alignItems: 'center',
-    borderRadius: 5,
-    justifyContent: 'center',
 
+  baseRectangleStyle :{
+    ...baseRectangleStyle
   },
-  buyAttensionText:{
-    fontSize:14,
-    fontWeight: 'bold',
-    color: '#009688',
-    padding: 5,
+  baseRectangleBorderedStyle :{
+    ...baseRectangleStyle,
+    borderWidth:1,
+    borderColor : 'green'
+  },
+  greenRectangleStyle : {
+    ...baseRectangleStyle,
+    backgroundColor: 'green'
+  },
+  deleteItemStyle: {
+    ...baseRectangleStyle,
+    backgroundColor:'gray',
+    flex:0
+  },
+  blueRectangleStyle: {
+    ...baseRectangleStyle,
+    backgroundColor:'darkblue'
+  },
+  redRectangleStyle: {
+    ...baseRectangleStyle,
+    backgroundColor:'#C62828'
+  },
 
-  },
-  sellAttensionText:{
-    fontSize:14,
-    fontWeight: 'bold',
-    color: '#E53935',
-    padding: 5,
-
-  },
-  timerContainer: {
-   padding:3,
-   margin:4,
-   flexDirection:'row',
-   alignItems: 'center',
-   borderRadius: 2,
-   borderWidth: 1,
-   justifyContent: 'center',
-   borderColor: '#009688'
-   },
    timeText:{
      padding:5,
      paddingRight:0,

@@ -464,7 +464,7 @@ export default class Main extends Component{
              barStyle="dark-content"
            />
           <View style= {{flexDirection:'row',alignItems: 'center',justifyContent: 'flex-start' }} >
-            <Icon name='inbox' onPress={()=>{this.props.navigation.navigate('InboxTabPage', {token: this.state.token})}} size={31} />
+            <Icon name='inbox' style={{padding:5}} onPress={()=>{this.props.navigation.navigate('InboxTabPage', {token: this.state.token})}} size={31} />
           </View>
           <View style={{width: 31}}>
           </View>
@@ -477,7 +477,7 @@ export default class Main extends Component{
             }
           </View>
           <View style= {{flexDirection:'column',alignItems: 'flex-end',justifyContent: 'center' }}>
-            <Icon name="add-circle-outline"
+            <Icon name="add-circle-outline" style={{padding:5}} 
              onPress={()=>{this.props.navigation.navigate('TakePhotoPage', {token: this.state.token})}}
              size={31}/>
           </View>
