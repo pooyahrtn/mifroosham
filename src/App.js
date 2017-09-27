@@ -1,10 +1,10 @@
 import React, { Component } from 'react';
 import {Root as NativeRoot}  from "native-base";
 import {AsyncStorage, View, Text, Platform, StyleSheet, PixelRatio, Button, Image} from 'react-native';
-import Welcome from './components/welcome.js';
+
 import Main from './components/main.js';
-import Root from './components/root.js';
-import RepoList from './components/repolist.js';
+
+
 import SoldPage from './components/SoldPage.js';
 import BoughtPage from './components/BoughtPage.js';
 import ProfilePageWithHeader from './components/profilePageWithHeader.js';
