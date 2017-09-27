@@ -1,18 +1,19 @@
 // props: token, transactions_url, lable, type, null_transaction_message
 import React, { Component } from 'react';
-import {View, FlatList, StatusBar, ActivityIndicator, Text, Modal, TextInput} from 'react-native';
+import {View, FlatList, StatusBar, ActivityIndicator, Text, Modal, TextInput, TouchableWithoutFeedback} from 'react-native';
 import { Icon } from 'react-native-elements';
 import { Container,Button ,Content, Header, Body, Title, List, Toast} from 'native-base';
-import {delete_transaction_url, write_review_url, confirm_deliver_url} from '../serverAddress.js';
+import {delete_transaction_url, write_review_url, confirm_deliver_url, transaction_helps_url, cancel_sell_url, get_phone_number_from_transaction} from '../serverAddress.js';
 import DeliverItem from './deliverItem.js'
 import StarRating from 'react-native-star-rating';
-
+import {phonecall} from 'react-native-communications'
 export default class AbstractTransactionPage extends Component {
 
   token = this.props.token;
 
   componentDidMount(){
     this.makeRemoteRequest(this.token)
+    this.loadHelps()
   }
   constructor(props){
     super(props);
@@ -31,7 +32,20 @@ export default class AbstractTransactionPage extends Component {
       selected_transaction_to_deliver_confirm_code : undefined,
       deliver_item_error_massage : ' ',
       loading_confirm_deliver : false,
+      helps : undefined,
+      show_cancel_sell: false,
+      selected_transaction_to_cancel : undefined,
+      selected_transaction_to_cancel_disable_after_cancel : false,
+    
     }
+  }
+
+  loadHelps = ()=>{
+    fetch(transaction_helps_url).then(res=>res.json()).then(
+      resjes => {this.setState({helps: resjes})}
+    ).catch(error=>{
+      this.loadHelps()
+    })
   }
 
   makeRemoteRequest = (token) => {
@@ -315,6 +329,11 @@ export default class AbstractTransactionPage extends Component {
 
       });
   }
+
+  showCancelSellModal = (transaction) =>{
+    this.setState({selected_transaction_to_cancel: transaction, show_cancel_sell: true})
+  }
+
   showReviewModal = (transaction)=>{
     if(transaction.rate_status === 'ra'){
       this.setState({show_review_modal: true, selected_transaction_to_review : transaction,
@@ -327,6 +346,127 @@ export default class AbstractTransactionPage extends Component {
 
   showDeliverModal = (transaction)=>{
     this.setState({show_deliver_modal : true, selected_transaction_to_deliver : transaction, deliver_item_error_massage: ' ', loading_confirm_deliver: false})
+  }
+
+  cancelSell = (transaction, disable_post) =>{
+    this.setState({loading_confirm_deliver : true})
+    fetch(cancel_sell_url,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Token ' + this.token
+        }, body : JSON.stringify(
+          {
+            transaction_uuid : transaction.uuid,
+            disable_post : disable_post
+          }
+        )
+      }
+    )
+      .then( res =>{
+
+          if(res.status === 200){
+            return {json: res.json(),ok: true}
+          }else {
+            this.setState({ loading_confirm_deliver:false, show_deliver_modal: false}, ()=>{
+              Toast.show({
+                      text: 'خطایی بوجود آمد',
+                      position: 'bottom',
+                      duration : 3000,
+                      type: 'danger'
+                    })
+              return {ok: false}
+            })
+          }
+        }
+      ).then((resjes) =>{
+        if(resjes.ok){
+          this.setState((state) => {
+            // copy the map rather than modifying state.
+            const data = state.data;
+            index = data.findIndex((item)=> {return item.uuid === transaction.uuid})
+            trans = data[index]
+            trans.status = 'ca'
+            trans.cancel_time = new Date()
+
+            data[index] = trans
+            return {data, show_cancel_sell: false};
+          }, ()=>{
+            Toast.show({
+                    text: 'فروش لغو شد',
+                    position: 'bottom',
+                    duration : 3000,
+                    type: 'success'
+                  })
+          });
+        }
+
+      })
+      .catch(error => {
+        this.setState({ error, show_deliver_modal: false }, ()=>{
+          Toast.show({
+                  text: 'خطایی بوجود آمد',
+                  position: 'bottom',
+                  duration : 3000,
+                  type: 'danger'
+                })
+        });
+
+      });
+  }
+
+  makePhoneCall = (transaction)=>{
+    fetch(get_phone_number_from_transaction,
+      {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Token ' + this.token
+        }, body : JSON.stringify(
+          {
+            transaction_uuid : transaction.uuid,
+          }
+        )
+      }
+    )
+      .then( res =>{
+
+          if(res.status === 200){
+            return res.json()
+          }else {
+            this.setState({ loading_confirm_deliver:false, show_deliver_modal: false}, ()=>{
+              Toast.show({
+                      text: 'خطایی بوجود آمد',
+                      position: 'bottom',
+                      duration : 3000,
+                      type: 'danger'
+                    })
+              return {ok: false}
+            })
+          }
+        }
+      ).then((resjes) =>{
+        if(resjes){
+          // console.log(resjes.phone_number);
+          phonecall(resjes.phone_number, true)
+        }
+
+      })
+      .catch(error => {
+        // console.log(error);
+        this.setState({ error, show_deliver_modal: false }, ()=>{
+          Toast.show({
+                  text: 'خطایی بوجود آمد',
+                  position: 'bottom',
+                  duration : 3000,
+                  type: 'danger'
+                })
+        });
+
+      });
   }
 
   auctionSuggestHigher = (transaction)=>{
@@ -421,15 +561,26 @@ export default class AbstractTransactionPage extends Component {
             >
             <View style={{flex: 1, justifyContent:'center', backgroundColor:'rgba(0, 0, 0, 0.70)'}}>
               <View style={{margin: 22, backgroundColor:'#ffffff', borderRadius: 3, padding: 5}}>
-                <Text style={{padding: 5, textAlign:'center', fontSize: 17, fontWeight:'bold', color:'green'}}>تحویل آگهی</Text>
+                <Text style={{padding: 5, textAlign:'center', fontSize: 17, fontWeight:'bold', color:'red'}}>لغو فروش</Text>
                 <Text style={{textAlign: 'center', padding: 3}}>آیا تمایل به لغو فروش به این کاربر را دارید؟</Text>
-                <Text style={{textAlign: 'center', padding: 3}}>در صورت لغو، مبلغ کالا به خریدار با خواهد گشت.</Text>
-                {this.selected_transaction_to_cancel &&
-                  <Text></Text>
+                <Text style={{textAlign: 'center', padding: 3}}>در صورت لغو، مبلغ تراکنش به خریدار بازخواهد گشت.</Text>
+                {this.state.selected_transaction_to_cancel && this.state.selected_transaction_to_cancel.post.post_type === 2 &&
+                  <Text style={{textAlign: 'center', padding: 3, color:'red'}}>{this.state.helps.cancel_sell_auction_alert}</Text>
                 }
+                <TouchableWithoutFeedback onPress={()=>{this.setState({selected_transaction_to_cancel_disable_after_cancel: !this.state.selected_transaction_to_cancel_disable_after_cancel})}}>
+                  <View style={{flexDirection:'row',alignItems:'center', padding: 10, margin: 5}}>
+
+                    <Text style={{flex:1, margin: 3}}>حذف آگهی</Text>
+                    {this.state.selected_transaction_to_cancel_disable_after_cancel?(
+                      <Icon color='#33691E' name='check-box' size={25} />
+                    ):(
+                      <Icon name='check-box-outline-blank'size={25}/>
+                    )}
+                  </View>
+                </TouchableWithoutFeedback>
                <View style={{flexDirection:'row'}}>
 
-                 <Button danger block onPress={()=>this.setState({show_deliver_modal: false})} style={{margin: 4, flex:1}}>
+                 <Button danger block onPress={()=>this.setState({show_cancel_sell: false})} style={{margin: 4, flex:1}}>
                    <Text style={{color:'#ffffff', margin: 2}}>بیخیال</Text>
                  </Button>
                  {this.state.loading_confirm_deliver ? (
@@ -437,7 +588,7 @@ export default class AbstractTransactionPage extends Component {
                      <Text style={{color:'#ffffff', margin: 2}}>لطفا صبر کنید</Text>
                    </Button>
                  ):(
-                   <Button success block onPress={()=>{this.confirmDeliver(this.state.selected_transaction_to_deliver, this.state.selected_transaction_to_deliver_confirm_code)}} style={{margin: 4, flex:1}}>
+                   <Button success block onPress={()=>{this.cancelSell(this.state.selected_transaction_to_cancel, this.state.selected_transaction_to_cancel_disable_after_cancel)}} style={{margin: 4, flex:1}}>
                      <Text style={{color:'#ffffff', margin: 2}}>خب</Text>
                    </Button>
                  )}
@@ -467,7 +618,9 @@ export default class AbstractTransactionPage extends Component {
                 deleteItem = {this.deleteItem}
                 showReviewModal = {this.showReviewModal}
                 showDeliverModal = {this.showDeliverModal}
+                showCancelSellModal = {this.showCancelSellModal}
                 auctionSuggestHigher = {this.auctionSuggestHigher}
+                makePhoneCall = {this.makePhoneCall}
               />
             }/>
         </View>

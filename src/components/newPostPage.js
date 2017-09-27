@@ -37,6 +37,7 @@ export default class NewPostPage extends Component {
       show_send_modal: false,
       send_loading : false,
       sending_failed : false,
+      disable_after_buy : true,
     }
     this.updateIndex = this.updateIndex.bind(this)
   }
@@ -125,18 +126,19 @@ export default class NewPostPage extends Component {
     formdata.append('next_buy_ben', 0);
     if(this.state.selectedIndex === 2){
       formdata.append('price', this.state.price);
+      formdata.append('disable_after_buy', this.state.disable_after_buy)
     }else{
       formdata.append('price', 0)
     }
     if(this.state.selectedIndex === 1){
       formdata.append('discount_start_price', this.state.price)
       formdata.append('discount_end_price', this.state.end_price)
-
+      formdata.append('disable_after_buy', this.state.disable_after_buy)
       formdata.append('end_time', this.state.end_time)
     } else if(this.state.selectedIndex === 0){
       formdata.append('auction_base_price', this.state.price)
-
       formdata.append('end_time', this.state.end_time)
+      formdata.append('disable_after_buy', true)
     }
 
 
@@ -335,6 +337,25 @@ export default class NewPostPage extends Component {
               </View>
             )}
         </Card>
+        {this.state.selectedIndex !== 0 &&
+          <Card>
+            <View style={{flexDirection:'row', alignItems:'center'}}>
+              <Icon name='question' type='evilicon'  style={{padding:3}} onPress={()=>{this.setState({show_help_modal:true, selected_help:'disable_after_buy'})}}/>
+              <TouchableWithoutFeedback onPress={()=>{this.setState({disable_after_buy: !this.state.disable_after_buy})}}>
+                <View style={{flexDirection:'row', padding:9, flex:1 ,alignItems:'center'}}>
+
+                  <Text style={{flex:1, margin: 3}}>حذف آگهی پس از فروش</Text>
+                  {this.state.disable_after_buy?(
+                    <Icon color='#33691E' name='check-box' size={25} />
+                  ):(
+                    <Icon name='check-box-outline-blank'size={25}/>
+                  )}
+                </View>
+              </TouchableWithoutFeedback>
+            </View>
+          </Card>
+        }
+
         <Card>
           <Text style={styles.sectionTitleText}>توضیحات</Text>
           <TextInput style={{flex:1, margin: 5}} multiline={true} numberOfLines = {4}

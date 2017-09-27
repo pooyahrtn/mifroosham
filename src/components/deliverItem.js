@@ -36,8 +36,6 @@ export default class DeliverItem extends PureComponent{
     }
     this.state = {
       remaining_time: getRemainingDays(end_time),
-      end_time : end_time,
-      intervalId : undefined
     };
 
   }
@@ -57,6 +55,7 @@ export default class DeliverItem extends PureComponent{
             {this.props.status === 'de' && this.props.type === 'BO' &&(<Text style={{color: '#009688'}}>تحویل گرفته شد </Text>)}
             {this.props.status === 'ca' && this.props.type === 'BO' && !this.props.auction_failed &&(<Text style={{color: '#009688'}}>فروشنده فروش را لغو کرد</Text>)}
             {this.props.status === 'ca' && this.props.type === 'BO' && this.props.auction_failed &&(<Text style={{color: '#009688'}}>پیشنهادی بالاتر از شما ثبت شد</Text>)}
+            {this.props.status === 'ca' && this.props.type === 'SO' &&(<Text style={{color: '#009688'}}>فروش لغو شد</Text>)}
            </Text>
         </View>
 
@@ -167,7 +166,7 @@ export default class DeliverItem extends PureComponent{
               }
               {this.props.status === 'pe' &&
                 <TouchableNativeFeedback
-                  onPress={()=>{}}
+                  onPress={()=>{this.props.makePhoneCall(this.props)}}
                   background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
                   <View style={styles.greenRectangleStyle}>
                     <Text style={{color:'white'}}>تماس</Text>
@@ -179,7 +178,7 @@ export default class DeliverItem extends PureComponent{
 
               {this.props.status === 'pe' && this.props.type === 'SO' &&
                 <TouchableNativeFeedback
-                  onPress={()=>{this.props.auctionSuggestHigher(this.props)}}
+                  onPress={()=>{this.props.showCancelSellModal(this.props)}}
                   background={Platform.OS === 'android' ? TouchableNativeFeedback.SelectableBackground() : ''}>
                   <View style={styles.redRectangleStyle}>
                     <Text style={{color:'white'}}>لغو فروش</Text>
