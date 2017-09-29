@@ -7,9 +7,11 @@ import {Container, Header, Title, Toast} from 'native-base';
 import {base_url, read_feeds_url, invest_helps_url, request_invest_url, posts_url} from '../serverAddress.js';
 import BuyItemPage from './buyItemPage.js';
 import {EnglighNumberToPersian} from '../utility/NumberUtils.js'
+import {initData, loadMore, updatePost} from '../actions/feedsActions.js'
+import {connect} from 'react-redux';
+import {bindActionCreators} from 'redux';
 
-
-export default class Main extends Component{
+class Main extends Component{
 
   static navigationOptions = {
     tabBarLabel: 'خانه',
@@ -19,7 +21,6 @@ export default class Main extends Component{
   constructor(props){
     super(props);
     this.state = {
-      data: null,
       loading: false,
       next_page : base_url,
       error : null,
@@ -48,7 +49,7 @@ export default class Main extends Component{
     .then( (value) =>{
         if (value != null){
           this.setState({token: value})
-          this.makeRemoteRequest(value)
+          this.handleRefresh(value)
         } else{
           this.props.navigation.navigate('Authentication')
         }
@@ -108,8 +109,14 @@ export default class Main extends Component{
     )
       .then(res => res.json())
       .then(res => {
+
+        if (page === 1){
+          this.props.initData(res.results)
+        }else{
+          this.props.loadMore(res.results)
+        }
+
         this.setState({
-          data: page === 1 ? res.results : [...this.state.data, ...res.results],
           error: res.error || null,
           loading: false,
           refreshing: false,
@@ -126,11 +133,13 @@ export default class Main extends Component{
 
   handleRefresh = () => {
     _uuids = []
-    len = this.state.data.length;
-    for (i in this.state.data) {
-      feed = this.state.data[len - i - 1]
+    len = this.props.data.length;
+    for (i in this.props.data) {
+      feed = this.props.data[len - i - 1]
       if (!feed.read) {
         _uuids.push(feed.uuid)
+      }else{
+        break
       }
     }
      this.setState(
@@ -325,18 +334,20 @@ export default class Main extends Component{
        return res.json();
      }).then(
        (resjes) =>{
-         this.setState((state) => {
-           // copy the map rather than modifying state.
-           const data = state.data;
-           index = data.findIndex((item) => item.post.uuid === post.uuid);
-           feed = data[index]
-           feed.post = resjes
-          //  data[index] = feed
-           data[index] = feed
-           return {data};
-         });
+        //  this.setState((state) => {
+        //    // copy the map rather than modifying state.
+        //    const data = state.data;
+        //    index = data.findIndex((item) => item.post.uuid === post.uuid);
+        //    feed = data[index]
+        //    feed.post = resjes
+        //   //  data[index] = feed
+        //    data[index] = feed
+        //    return {data};
+        //  });
+          this.props.updatePost(resjes)
        }
      ).catch(error => {
+       console.error(error)
        Toast.show({
                text: 'خطایی بوجود آمد',
                position: 'bottom',
@@ -477,13 +488,13 @@ export default class Main extends Component{
             }
           </View>
           <View style= {{flexDirection:'column',alignItems: 'flex-end',justifyContent: 'center' }}>
-            <Icon name="add-circle-outline" style={{padding:5}} 
+            <Icon name="add-circle-outline" style={{padding:5}}
              onPress={()=>{this.props.navigation.navigate('TakePhotoPage', {token: this.state.token})}}
              size={31}/>
           </View>
         </Header>
         <View style={{flex:1}}>
-          <FlatList data={this.state.data}
+          <FlatList data={this.props.data}
             keyExtractor={item => item.uuid}
             refreshing = {this.state.refreshing}
             onRefresh={()=>this.handleRefresh()}
@@ -511,14 +522,14 @@ export default class Main extends Component{
 
 
 
-// function mapStateToProps(state){
-//   return{
-//     token : state.activeToken
-//   };
-// }
-//
-// function matchDispatchToProps(dispatch){
-//   return bindActionCreators({}, dispatch)
-// }
-//
-// export default connect(mapStateToProps, matchDispatchToProps)(Main);
+function mapStateToProps(state){
+  return{
+    data : state.feedsReducer
+  };
+}
+
+function matchDispatchToProps(dispatch){
+  return bindActionCreators({initData, loadMore, updatePost}, dispatch)
+}
+
+export default connect(mapStateToProps, matchDispatchToProps)(Main);

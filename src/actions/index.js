@@ -2,6 +2,7 @@ import {me, matin, kia, bahram} from '../myProfileData.js'
 
 
 
+
 export function getRecentHistoryThunk(){
   return function(dispatch, getState) {
     var arr = [
@@ -51,6 +52,7 @@ export function getRecentHistory(response){
       payload: response
     }
 }
+
 
 
 export function changeConnectionState( status ){

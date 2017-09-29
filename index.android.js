@@ -15,9 +15,13 @@
  import allReducers from './src/reducers/index.js';
  import App from './src/App.js';
  import thunk from 'redux-thunk'
- import {createStore, applyMiddleware} from 'redux';
+ import {AsyncStorage} from 'react-native'
+ import {compose, createStore, applyMiddleware} from 'redux';
+ import {persistStore, autoRehydrate} from 'redux-persist'
+
  import {Provider} from 'react-redux';
- const store = createStore(allReducers, applyMiddleware(thunk));
+ const store = createStore(allReducers,undefined, compose( applyMiddleware(thunk)), autoRehydrate);
+ persistStore(store,{storage:AsyncStorage})
 
  export default class NativeBaseRedux extends Component {
    render() {

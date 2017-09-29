@@ -7,6 +7,7 @@ import {delete_transaction_url, write_review_url, confirm_deliver_url, transacti
 import DeliverItem from './deliverItem.js'
 import StarRating from 'react-native-star-rating';
 import {phonecall} from 'react-native-communications'
+
 export default class AbstractTransactionPage extends Component {
 
   token = this.props.token;
@@ -18,7 +19,7 @@ export default class AbstractTransactionPage extends Component {
   constructor(props){
     super(props);
     this.state = {
-      data: null,
+
       loading: false,
       next_page : this.props.transactions_url,
       error : null,
@@ -36,7 +37,7 @@ export default class AbstractTransactionPage extends Component {
       show_cancel_sell: false,
       selected_transaction_to_cancel : undefined,
       selected_transaction_to_cancel_disable_after_cancel : false,
-    
+
     }
   }
 
@@ -70,8 +71,12 @@ export default class AbstractTransactionPage extends Component {
     )
       .then(res => res.json())
       .then(res => {
+        if (page === 1){
+          this.props.initData(res.results)
+        }else{
+          this.props.loadMore(res.results)
+        }
         this.setState({
-          data: page === 1 ? res.results : [...this.state.data, ...res.results],
           error: res.error || null,
           loading: false,
           refreshing: false,
@@ -221,25 +226,34 @@ export default class AbstractTransactionPage extends Component {
         }
       ).then(
         resjes => {
-          this.setState((state) => {
-            // copy the map rather than modifying state.
-            const data = state.data;
-            index = data.findIndex((item)=> {return item.uuid === resjes.transaction_uuid})
-            trans = data[index]
-            trans.rate_status = 'ra'
-            trans.review = {
-              rate, comment
-            }
-            data[index] = trans
-            return {data, show_review_modal: false};
-          }, ()=>{
-              Toast.show({
-                      text: 'نظر شما ثبت شد',
-                      position: 'bottom',
-                      duration : 3000,
-                      type: 'success'
-                    })
-          });
+          // this.setState((state) => {
+          //   // copy the map rather than modifying state.
+          //   const data = state.data;
+          //   index = data.findIndex((item)=> {return item.uuid === resjes.transaction_uuid})
+          //   trans = data[index]
+          //   trans.rate_status = 'ra'
+          //   trans.review = {
+          //     rate, comment
+          //   }
+          //   data[index] = trans
+          //   return {data, show_review_modal: false};
+          // }, ()=>{
+          //     Toast.show({
+          //             text: 'نظر شما ثبت شد',
+          //             position: 'bottom',
+          //             duration : 3000,
+          //             type: 'success'
+          //           })
+          // });
+          this.props.updateTransaction(resjes)
+          this.setState({show_review_modal: false}, ()=>{
+            Toast.show({
+                        text: 'نظر شما ثبت شد',
+                        position: 'bottom',
+                        duration : 3000,
+                        type: 'success'
+                      })
+          })
 
         }
       )
@@ -601,7 +615,7 @@ export default class AbstractTransactionPage extends Component {
         }
 
         <View style={{flex:1}}>
-          <FlatList data={this.state.data}
+          <FlatList data={this.props.data}
             keyExtractor={item => item.uuid}
             refreshing = {this.state.refreshing}
             onRefresh={()=>this.handleRefresh()}
