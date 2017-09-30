@@ -6,14 +6,19 @@ import { Container,Button ,Content, Header, Body, Title, List, Toast} from 'nati
 import {delete_transaction_url, write_review_url, confirm_deliver_url, transaction_helps_url, cancel_sell_url, get_phone_number_from_transaction} from '../serverAddress.js';
 import DeliverItem from './deliverItem.js'
 import StarRating from 'react-native-star-rating';
-import {phonecall} from 'react-native-communications'
+import {phonecall} from 'react-native-communications';
+import {readNotifications} from '../requestServer.js';
+import {connect} from 'react-redux';
+import {bindActionCreators} from 'redux';
 
-export default class AbstractTransactionPage extends Component {
+
+class AbstractTransactionPage extends Component {
 
   token = this.props.token;
 
   componentDidMount(){
     this.makeRemoteRequest(this.token)
+    readNotifications(this.token, (res)=>{this.props.readNotifications()}, (err)=>{})
     this.loadHelps()
   }
   constructor(props){
@@ -643,3 +648,16 @@ export default class AbstractTransactionPage extends Component {
     )
   }
 }
+
+
+function mapStateToProps(state){
+  return{
+
+  };
+}
+
+function matchDispatchToProps(dispatch){
+  return bindActionCreators({readNotifications}, dispatch)
+}
+
+export default connect(mapStateToProps, matchDispatchToProps)(AbstractTransactionPage);

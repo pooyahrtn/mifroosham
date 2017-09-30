@@ -6,19 +6,21 @@ import {Button} from 'react-native-elements';
 import {EnglighNumberToPersian} from '../utility/NumberUtils.js';
 import {resend_confirmation_code_url, login_url} from '../serverAddress.js'
 // import {Actions} from 'react-native-router-flux';
+import SInfo from 'react-native-sensitive-info';
 
 
 async function saveToken(token, is_sign_up, navigate){
-  try {
-    AsyncStorage.setItem('@Token:key', token.toString());
-    if (is_sign_up === 0) {
-      navigate('NewProfilePage', {token: token.toString()})
-    }else {
-      navigate('MyApp', {token: token.toString()})
-    }
-  } catch (error) {
-    console.log('save_error' + error);
-    Alert.alert('مشکلی پیش آمد', 'متاسفم :()')
+  SInfo.setItem('token', token.toString(), {
+    sharedPreferencesName: 'mifroosham',
+    keychainService: 'mifroosham',
+    encrypt: true
+    });
+
+  // AsyncStorage.setItem('@Token:key', token.toString());
+  if (is_sign_up === 0) {
+    navigate('NewProfilePage', {token: token.toString()})
+  }else {
+    navigate('MyApp', {token: token.toString()})
   }
 }
 
@@ -75,11 +77,10 @@ export default class ConfirmationPage extends Component {
      .then((response) => {
        this.setState({loading:false})
        if (response.status === 200) {
-
+         return response.json()
        }else if (response.status === 400) {
          Alert.alert('خطا', 'کد تایید اشتباه است')
        }
-       return response.json()
      })
      .then((responseJson) => {
        if (responseJson.hasOwnProperty('token')){

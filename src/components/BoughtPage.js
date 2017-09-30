@@ -5,6 +5,7 @@ import {initBoughtData, updateBoughtTransaction, loadBoughtMore, deleteBoughtTra
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 
+
  class Page extends Component{
   static navigationOptions = {
    tabBarLabel: 'خرید ها',

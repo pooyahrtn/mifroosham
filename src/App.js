@@ -18,9 +18,14 @@ import ProfilePage from './components/profilePage.js';
 import HistoryPage from './components/historyPage.js';
 import OneSignal from 'react-native-onesignal';
 import {my_notification_url} from './serverAddress.js'
-import {TabNavigator , StackNavigator} from 'react-navigation';
+import {TabNavigator , StackNavigator, NavigationActions} from 'react-navigation';
 import {Icon} from 'react-native-elements'
 import {NavigationComponent} from 'react-native-material-bottom-navigation'
+import SInfo from 'react-native-sensitive-info';
+import {addFocusedNotification} from './actions/notificationActions.js';
+
+import {connect} from 'react-redux';
+import {bindActionCreators} from 'redux';
 
 
 const InboxTabPage = TabNavigator({
@@ -128,10 +133,10 @@ const Navigator = ({ initialRouteName }) => {
     headerMode:'none'
   };
   const CustomNavigator = StackNavigator(routeConfigs, stackNavigatorConfigs);
-  return (<NativeRoot><CustomNavigator /></NativeRoot>);
+  return (<NativeRoot><CustomNavigator  /></NativeRoot>);
 };
 
-export default class App extends Component{
+class App extends Component{
   constructor(props) {
     super(props);
     this.state = {
@@ -143,22 +148,23 @@ export default class App extends Component{
   };
 
   componentWillMount(){
-    AsyncStorage.getItem('@Token:key')
-    .then( (value) =>{
-        if (value != null){
-          this.setState({
-            logged: true,
-            init_loading: false,
-            token : value
-          });
-          // this.props.tokenReceived(value)
-        } else{
-          this.setState({
-            init_loading: false,
-          })
-        }
+    SInfo.getItem('token', {
+    sharedPreferencesName: 'mifroosham',
+    keychainService: 'mifroosham'}).then(value => {
+      if (value != null){
+        this.setState({
+          logged: true,
+          init_loading: false,
+          token : value
+        });
+        // this.props.tokenReceived(value)
+      } else{
+        this.setState({
+          init_loading: false,
+        })
       }
-    );
+    });
+
     OneSignal.addEventListener('received', this.onReceived);
     OneSignal.addEventListener('opened', this.onOpened);
     OneSignal.addEventListener('registered', this.onRegistered);
@@ -174,14 +180,15 @@ export default class App extends Component{
    }
 
     onReceived(notification) {
-
+      console.log("notification received:  ",notification);
     }
 
     onOpened(openResult) {
       console.log('Message: ', openResult.notification.payload.body);
-      console.log('Data: ', openResult.notification.payload.additionalData);
+      console.log('Data: ', openResult.notification.payload.additionalData.transaction_uuid);
       console.log('isActive: ', openResult.notification.isAppInFocus);
       console.log('openResult: ', openResult);
+      addFocusedNotification(openResult.notification.payload.additionalData.transaction_uuid)
     }
 
     onRegistered(notifData) {
@@ -233,8 +240,18 @@ export default class App extends Component{
       return <View></View>
     }
     return(
-
       Navigator({initialRouteName : this.initRout()})
     );
   }
 }
+
+
+function mapStateToProps(state){
+  return {}
+}
+
+function matchDispatchToProps(dispatch){
+  return bindActionCreators({addFocusedNotification}, dispatch)
+}
+
+export default connect(mapStateToProps, matchDispatchToProps)(App);

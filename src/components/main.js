@@ -8,8 +8,12 @@ import {base_url, read_feeds_url, invest_helps_url, request_invest_url, posts_ur
 import BuyItemPage from './buyItemPage.js';
 import {EnglighNumberToPersian} from '../utility/NumberUtils.js'
 import {initData, loadMore, updatePost} from '../actions/feedsActions.js'
+import {setUnreadNotifications} from '../actions/notificationActions.js'
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
+import {initBoughtTransactions, initSoldTransactions, getTransactionNotifications} from '../requestServer.js';
+import {initBoughtData, initSoldData} from '../actions/transactionsActions.js';
+import SInfo from 'react-native-sensitive-info';
 
 class Main extends Component{
 
@@ -44,17 +48,34 @@ class Main extends Component{
 
   }
 
+  updateTransactions(type, data){
+      if(type === 'BO'){
+        this.props.initBoughtData(data)
+      }else{
+        this.props.initSoldData(data)
+      }
+  }
+
+  setNewNotificationsNumber(res){
+    this.props.setUnreadNotifications(res.count)
+  }
+
   componentDidMount(){
-    AsyncStorage.getItem('@Token:key')
-    .then( (value) =>{
+    SInfo.getItem('token', {
+    sharedPreferencesName: 'mifroosham',
+    keychainService: 'mifroosham'}).then(value => {
         if (value != null){
-          this.setState({token: value})
           this.handleRefresh(value)
+
+          initBoughtTransactions(value, (res) => {this.updateTransactions('BO', res)}, (error) => {})
+          initSoldTransactions(value, (res) => {this.updateTransactions('SO', res)}, (error) => {})
+          getTransactionNotifications(value, (res) => {this.setNewNotificationsNumber(res)}, (error) =>{})
+          this.setState({token: value})
         } else{
           this.props.navigation.navigate('Authentication')
         }
-      }
-    );
+      });
+
     PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION).then((res) => {
       if (!res) {
         PermissionsAndroid.request(
@@ -66,7 +87,9 @@ class Main extends Component{
         ).then(
           (granted) => {
             if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-              Alert.alert('hoora')
+
+            }else {
+              //TODO: show why we need location Permission
             }
           }
         )
@@ -83,6 +106,9 @@ class Main extends Component{
       }
     })
 
+    if(this.props.notification){
+      this.props.navigation.navigate('InboxTabPage', {token: this.state.token})
+    }
   }
 
 
@@ -131,7 +157,7 @@ class Main extends Component{
   };
 
 
-  handleRefresh = () => {
+  handleRefresh = (token) => {
     _uuids = []
     len = this.props.data.length;
     for (i in this.props.data) {
@@ -155,7 +181,7 @@ class Main extends Component{
              headers: {
                'Accept': 'application/json',
                'Content-Type': 'application/json',
-               'Authorization': 'Token ' + this.state.token
+               'Authorization': 'Token ' + token
              },
              body: JSON.stringify({
                visiting_version : this.state.visit_version,
@@ -475,7 +501,20 @@ class Main extends Component{
              barStyle="dark-content"
            />
           <View style= {{flexDirection:'row',alignItems: 'center',justifyContent: 'flex-start' }} >
-            <Icon name='inbox' style={{padding:5}} onPress={()=>{this.props.navigation.navigate('InboxTabPage', {token: this.state.token})}} size={31} />
+            {this.props.newMessages > 0 ?
+              (
+                <TouchableWithoutFeedback onPress={()=>{this.props.navigation.navigate('InboxTabPage', {token: this.state.token})}}>
+                  <View style={{borderRadius: 15, height: 30 , backgroundColor:'red', alignItems:'center', justifyContent:'center', width: 60}}>
+                    <Text style={{color:'white', fontSize:18 , fontWeight:'bold'}}>{EnglighNumberToPersian(this.props.newMessages)}</Text>
+                  </View>
+                </TouchableWithoutFeedback>
+
+              )
+              :
+              (
+                <Icon name='inbox' style={{padding:5}} onPress={()=>{this.props.navigation.navigate('InboxTabPage', {token: this.state.token})}} size={31} />
+              )}
+
           </View>
           <View style={{width: 31}}>
           </View>
@@ -497,7 +536,7 @@ class Main extends Component{
           <FlatList data={this.props.data}
             keyExtractor={item => item.uuid}
             refreshing = {this.state.refreshing}
-            onRefresh={()=>this.handleRefresh()}
+            onRefresh={()=>this.handleRefresh(this.state.token)}
             onEndReached={this.handleLoadMore}
             onEndReachedThreshold={4}
             initialNumToRender={4}
@@ -524,12 +563,14 @@ class Main extends Component{
 
 function mapStateToProps(state){
   return{
-    data : state.feedsReducer
+    data : state.feedsReducer,
+    notification : state.notificationReducer,
+    newMessages : state.unreadNotificationsReducer,
   };
 }
 
 function matchDispatchToProps(dispatch){
-  return bindActionCreators({initData, loadMore, updatePost}, dispatch)
+  return bindActionCreators({initData, loadMore, updatePost, initBoughtData, initSoldData, setUnreadNotifications}, dispatch)
 }
 
 export default connect(mapStateToProps, matchDispatchToProps)(Main);

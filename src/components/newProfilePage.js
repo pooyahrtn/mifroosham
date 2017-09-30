@@ -1,6 +1,6 @@
 
 import React, {Component} from 'react';
-import {View, TouchableWithoutFeedback, StyleSheet, StatusBar, AsyncStorage, NetInfo, Alert, TextInput, BackHandler} from 'react-native';
+import {View, TouchableWithoutFeedback, StyleSheet, StatusBar, NetInfo, Alert, TextInput, BackHandler} from 'react-native';
 import { Container,Content, Header, Body, Text,Footer ,Button, Card, Input, Item, Label, Spinner} from 'native-base';
 // import {Actions} from 'react-native-router-flux';
 import { Icon, ButtonGroup, Avatar, CheckBox, FormLabel, FormInput} from 'react-native-elements';
