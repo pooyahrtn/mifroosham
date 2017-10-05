@@ -6,6 +6,7 @@ import soldTransactionsReducer from './soldTransactionsReducer.js';
 import boughtTransactionsReducer from './boughtTransactionsReducer';
 import notificationReducer from './notificationReducer.js';
 import unreadNotificationsReducer from './unreadNotificationsReducer.js';
+
 const allReducers= combineReducers({
 
   recentHistory: RecentHistory,
@@ -14,6 +15,7 @@ const allReducers= combineReducers({
   soldTransactionsReducer,
   notificationReducer,
   unreadNotificationsReducer,
+
 });
 
 

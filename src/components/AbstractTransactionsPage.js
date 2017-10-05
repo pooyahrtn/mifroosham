@@ -14,11 +14,11 @@ import {bindActionCreators} from 'redux';
 
 class AbstractTransactionPage extends Component {
 
-  token = this.props.token;
+
 
   componentDidMount(){
-    this.makeRemoteRequest(this.token)
-    readNotifications(this.token, (res)=>{this.props.readNotifications()}, (err)=>{})
+    this.makeRemoteRequest(this.props.token)
+    readNotifications(this.props.token, (res)=>{this.props.readNotifications()}, (error) => {console.log(error)})
     this.loadHelps()
   }
   constructor(props){
@@ -106,7 +106,7 @@ class AbstractTransactionPage extends Component {
          refreshing: true
        },
        () => {
-        this.makeRemoteRequest(this.token)
+        this.makeRemoteRequest(this.props.token)
        }
      );
    };
@@ -117,7 +117,7 @@ class AbstractTransactionPage extends Component {
           page: this.state.page + 1
         },
         () => {
-          setTimeout(()=>this.makeRemoteRequest(this.token), 5000)
+          setTimeout(()=>this.makeRemoteRequest(this.props.token), 5000)
         }
       );
   };
@@ -163,7 +163,7 @@ class AbstractTransactionPage extends Component {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': 'Token ' + this.token
+          'Authorization': 'Token ' + this.props.token
         }, body : JSON.stringify(
           {
             transaction_uuid : transaction.uuid
@@ -203,7 +203,7 @@ class AbstractTransactionPage extends Component {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': 'Token ' + this.token
+          'Authorization': 'Token ' + this.props.token
         }, body : JSON.stringify(
           {
             transaction_uuid : transaction.uuid,
@@ -284,7 +284,7 @@ class AbstractTransactionPage extends Component {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': 'Token ' + this.token
+          'Authorization': 'Token ' + this.props.token
         }, body : JSON.stringify(
           {
             transaction_uuid : transaction.uuid,
@@ -375,7 +375,7 @@ class AbstractTransactionPage extends Component {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': 'Token ' + this.token
+          'Authorization': 'Token ' + this.props.token
         }, body : JSON.stringify(
           {
             transaction_uuid : transaction.uuid,
@@ -443,7 +443,7 @@ class AbstractTransactionPage extends Component {
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
-          'Authorization': 'Token ' + this.token
+          'Authorization': 'Token ' + this.props.token
         }, body : JSON.stringify(
           {
             transaction_uuid : transaction.uuid,
@@ -489,7 +489,7 @@ class AbstractTransactionPage extends Component {
   }
 
   auctionSuggestHigher = (transaction)=>{
-    this.props.navigation.navigate('BuyItemPage', {post: transaction.post, token: this.token, reposter: transaction.reposter})
+    this.props.navigation.navigate('BuyItemPage', {post: transaction.post, token: this.props.token, reposter: transaction.reposter})
   }
 // reviews={["خیلی بد", "بد", "ای...", "خوب", "عالی",]}
   render(){

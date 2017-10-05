@@ -9,18 +9,22 @@ import {resend_confirmation_code_url, login_url} from '../serverAddress.js'
 import SInfo from 'react-native-sensitive-info';
 
 
-async function saveToken(token, is_sign_up, navigate){
+async function saveToken(token, is_sign_up, navigation){
   SInfo.setItem('token', token.toString(), {
     sharedPreferencesName: 'mifroosham',
     keychainService: 'mifroosham',
     encrypt: true
     });
-
+  SInfo.setItem('username', navigation.state.params.username, {
+    sharedPreferencesName: 'mifroosham',
+    keychainService: 'mifroosham',
+    encrypt: true
+    });
   // AsyncStorage.setItem('@Token:key', token.toString());
   if (is_sign_up === 0) {
-    navigate('NewProfilePage', {token: token.toString()})
+    navigation.navigate('NewProfilePage', {token: token.toString()})
   }else {
-    navigate('MyApp', {token: token.toString()})
+    navigation.navigate('MyApp', {token: token.toString()})
   }
 }
 
@@ -84,7 +88,7 @@ export default class ConfirmationPage extends Component {
      })
      .then((responseJson) => {
        if (responseJson.hasOwnProperty('token')){
-         saveToken(responseJson.token, this.props.navigation.state.params.is_sign_up, this.props.navigation.navigate)
+         saveToken(responseJson.token, this.props.navigation.state.params.is_sign_up, this.props.navigation)
        }
      })
      .catch((error) => {

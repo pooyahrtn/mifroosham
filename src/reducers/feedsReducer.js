@@ -1,4 +1,4 @@
-import {REFRESH_FEEDS, REFRESHIN_FEEDS, LOADING_FEEDS, LOADED_VALUES,ERROR_HAPPENED ,UPDATE_POST, INIT_FEEDS, LOAD_MORE} from '../actions/feedsActions.js'
+import { UPDATE_POST, INIT_FEEDS, LOAD_MORE} from '../actions/feedsActions.js'
 import {REHYDRATE} from 'redux-persist/constants'
 
 

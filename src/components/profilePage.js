@@ -1,63 +1,66 @@
 import React, { Component } from 'react';
 import {connect} from 'react-redux';
-import {FlatList, StyleSheet, Dimensions, Image, View, Text,TouchableWithoutFeedback, Linking} from 'react-native';
+import {FlatList, StyleSheet, Dimensions, Image, View, Text,
+  TouchableWithoutFeedback, Linking, ActivityIndicator, StatusBar} from 'react-native';
 import {bindActionCreators} from 'redux';
-import { Card ,  Thumbnail, Footer, FooterTab, Container, Button} from 'native-base';
-import {getUserThunk} from '../actions/index';
-import { Icon } from 'react-native-elements';
+import { Card ,  Thumbnail, Button, Header, Title, Toast} from 'native-base';
+import { Icon, Rating } from 'react-native-elements';
 import {countText, EnglishNumberToPersianPrice} from '../utility/NumberUtils.js';
 import {phonecall} from 'react-native-communications'
 import ImagePicker from 'react-native-image-crop-picker';
+import SInfo from 'react-native-sensitive-info';
+import {userDetail, userPosts, updateProfilePhoto, followUser} from '../requestServer.js';
+import {EnglighNumberToPersian} from '../utility/NumberUtils.js';
 
 
 class ProfilePage extends Component {
+
+  static navigationOptions = {
+    tabBarLabel: 'من',
+  }
+
+
  componentDidMount(){
-   if(this.props.activeUser === '@me'){
-     if(this.props.activeUserData && this.props.activeUserData.hasOwnProperty('username')){
-
-
-     }else{
-       AsyncStorage.getItem('@username')
-       .then( (value) =>{
-           if (value != null){
-             this.props.userData({username: value})
-
-           } else{
-             fetch(my_profile,
-               {
-                 method: 'GET',
-                 headers: {
-                   'Accept': 'application/json',
-                   'Content-Type': 'application/json',
-                   'Authorization': 'Token ' + this.props.activeToken
-                 }
-               }
-             )
-               .then(res => res.json())
-               .then(res => {
-                 AsyncStorage.setItem('@username', res.user.username)
-                 this.props.userData({username: res.user.username})
-
-               })
-               .catch(error => {
-                 console.log(error);
-               });
-           }
+   SInfo.getItem('token', {
+   sharedPreferencesName: 'mifroosham',
+   keychainService: 'mifroosham'}).then(token => {
+       if (token != null){
+         if(this.props.navigation.state.hasOwnProperty('params')){
+            username= this.props.navigation.state.params.username
+            this.setState({username, token})
+            this.userPostsRequest(token, username)
+            this.userDetailRequest(token, username)
+          }else{
+            SInfo.getItem('username', {
+            sharedPreferencesName: 'mifroosham',
+            keychainService: 'mifroosham'}).then(username => {
+                this.setState({username, isItMe: true, token})
+                this.userPostsRequest(token, username)
+                this.userDetailRequest(token, username)
+            });
          }
-       );
-     }
-   }else {
+       }
+      else{
+         this.props.navigation.navigate('Authentication')
+       }
+     });
 
-   }
  }
  constructor(props){
    super(props);
+
    this.state={
+     data: [],
      page : 1,
+     username : undefined,
+     isItMe : false,
+     loading: false,
+     error : null,
+     refreshing : false,
+     token : undefined,
+     user : undefined
    }
  }
-
-
 
 
  renderFooter = () => {
@@ -75,107 +78,186 @@ class ProfilePage extends Component {
      );
    };
 
+userDetailRequest = (token, username) =>{
+  let onSuccess = (res)=>{
+    this.setState({user: res})
+  }
+  let onFailed = (error)=>{
 
- userPostsRequest = () => {
+  }
+  userDetail(token, username, onSuccess, onFailed)
+}
+
+_updateProfilePhoto = (image) =>{
+    onSuccess = (res) =>{
+      this.setState((prevState)=>{
+        user = prevState.user;
+        user.profile.avatar_url = res.avatar_url;
+        return {user}
+      })
+    }
+    onFailed = (error) =>{
+
+    }
+    updateProfilePhoto(this.state.token, image, onSuccess, onFailed)
+}
+
+ userPostsRequest = (token, username) => {
    const { page } = this.state;
    this.setState({ loading: true });
-   next_url = this.state.next_page
-
-   fetch(next_url,
-     {
-       method: 'GET',
-       headers: {
-         'Accept': 'application/json',
-         'Content-Type': 'application/json',
-         'Authorization': 'Token ' + this.props.token
-       }
-     }
-   )
-     .then(res => res.json())
-     .then(res => {
-       this.setState({
-         data: page === 1 ? res.results : [...this.state.data, ...res.results],
-         error: res.error || null,
-         loading: false,
-         refreshing: false,
-         next_page : res.next
-       });
-     })
-     .catch(error => {
-       this.setState({ error, loading: false });
-       console.log(error);
+   let onSuccess = (res) =>{
+     this.setState({
+       data: page === 1 ? res.results : [...this.state.data, ...res.results],
+       error: res.error || null,
+       loading: false,
+       refreshing: false,
+       page : this.state.page + 1
      });
+   }
+
+   let onFailed = (error) =>{
+     this.setState({ error, loading: false });
+     console.log(error);
+   }
+   userPosts(token, page, username, onSuccess, onFailed)
  };
 
+ _followUser = ()=>{
+   let onSuccess = (res) =>{
+     this.setState((prevState) =>{
+       user = prevState.user
+       user.you_follow = res.following
+       return {user}
+     })
+   }
+   let onFailed = (error) =>{
+     Toast.show({
+             text: 'خطایی بوجود آمد',
+             position: 'bottom',
+             duration : 3000,
+             type: 'danger'
+           })
+   }
+   followUser(this.state.token, this.state.username, onSuccess, onFailed)
+ }
 
  render(){
    return(
-     <Container>
-       <View style={{flex:1}}>
-        {this.props.userInfo &&
-          <View style={styles.personInfoContainer}>
-            <View style={{flexDirection:'row'}}>
-              <View style={{flex:1}}>
-                <View style={{flex:1,flexDirection:'row',justifyContent:'center',alignItems:'stretch'}}>
-                  <View style={{flex:1,margin:1, justifyContent:'center', alignItems:'center'}}>
-                    <Text textSize={15} fontWeight='bold' style={styles.countText}>{countText(this.props.userInfo.followers_count)}</Text>
-                    <Text>مورد دیده شدن</Text>
-                  </View>
-                  <View style={{flex:1,margin:1, justifyContent:'center', alignItems:'center'}}>
-                    <Text textSize={15} fontWeight='bold' style={styles.countText}>{countText(this.props.userInfo.followings_count)}</Text>
-                    <Text>دیده کردن</Text>
-                  </View>
-                </View>
-                <SettingOrFollowButton following={this.props.userInfo.following} itIsMe={this.props.userInfo.itIsMe}/>
-              </View>
-              <TouchableWithoutFeedback onPress={()=>{
-                ImagePicker.openPicker({
-                  width: 300,
-                  height: 300,
-                  cropperCircleOverlay : true,
-                  cropping: true
-                }).then(image => {
-
-                });
-              }}>
-                <View style={{flex:1, alignItems:"flex-end"}}>
-                  <Thumbnail large source={{uri: this.props.userInfo.avatar_url}}/>
-                  <Text style={{padding:5, fontWeight:'bold', flex:1}}>{this.props.userInfo.full_name}</Text>
-                </View>
-              </TouchableWithoutFeedback>
-
-            </View>
-            <Text style={{fontSize: 12, padding:5}}>{this.props.userInfo.bio}</Text>
-            {this.props.userInfo.itIsMe &&
-              <TouchableWithoutFeedback  onPress={()=>{}}>
-              <View style={styles.moneyButton}>
-                <Text style={{color:'#ffffff', fontWeight:'bold', fontSize:15}} > موجودی {EnglishNumberToPersianPrice(this.props.userInfo.money)} تومان</Text>
-                <Icon name='credit-card' color='#ffffff'/>
-              </View>
-            </TouchableWithoutFeedback>}
-
-            <View style={{flexDirection:'row'}}>
-            {this.props.userInfo.location &&
-              <TouchableWithoutFeedback  onPress={()=>{Linking.openURL(this.props.userInfo.location).catch(err => console.error('An error occurred', err));}}>
-                <View style={styles.contactButton}>
-                  <Text style={{color:'#ffffff', fontWeight:'bold', fontSize:15}} >آدرس</Text>
-                  <Icon name='my-location' color='#ffffff'/>
-                </View>
-              </TouchableWithoutFeedback>
-            }
-            {this.props.userInfo.phone_number &&
-              <TouchableWithoutFeedback  onPress={()=>{phonecall(this.props.userInfo.phone_number, true)}}>
-                <View style={styles.contactButton}>
-                  <Text style={{color:'#ffffff', fontWeight:'bold', fontSize:15}} >تماس</Text>
-                  <Icon name='call' color='#ffffff'/>
-                </View>
-              </TouchableWithoutFeedback> }
-            </View>
-          </View>
+     <View style={{flex:1}}>
+     <Header style={{backgroundColor: '#F5F5F5'}}>
+       <StatusBar
+          backgroundColor="#e0e0e0"
+          barStyle="dark-content"
+        />
+       <View style={{width: 40}}/>
+       <View style= {{flexDirection:'column',alignItems: 'center',justifyContent: 'center' ,flex:1}}>
+          {this.state.user &&
+            <Title style={{ color: 'black', fontWeight:'bold'}}>{this.state.user.profile.full_name}</Title>
+          }
+       </View>
+       <View style={{width: 40, justifyContent:'center'}}>
+        {this.state.isItMe &&
+          <Icon style={{padding: 5}} name='settings'/>
         }
-        {(this.props.userInfo && this.props.userInfo.posts.length > 0)&&
+       </View>
+
+     </Header>
+          {this.state.user &&
+            <View style={styles.personInfoContainer}>
+              <View style={{flexDirection:'row'}}>
+                <View style={{flex:1}}>
+                  <View style={{flex:1,flexDirection:'row',justifyContent:'center',alignItems:'stretch'}}>
+                    <View style={{flex:1,margin:1, justifyContent:'center', alignItems:'center'}}>
+                      <Text textSize={15} fontWeight='bold' style={styles.countText}>{countText(this.state.user.follow.n_followers)}</Text>
+                      <Text>مورد دیده شدن</Text>
+                    </View>
+                    <View style={{flex:1,margin:1, justifyContent:'center', alignItems:'center'}}>
+                      <Text textSize={15} fontWeight='bold' style={styles.countText}>{countText(this.state.user.follow.n_followings)}</Text>
+                      <Text>دیده کردن</Text>
+                    </View>
+                  </View>
+
+                </View>
+                <TouchableWithoutFeedback onPress={()=>{
+                  ImagePicker.openPicker({
+                    width: 300,
+                    height: 300,
+                    cropperCircleOverlay : true,
+                    cropping: true
+                  }).then(image => {
+                    this._updateProfilePhoto(image)
+                  }).catch(error => {});
+                }}>
+                  <Thumbnail large source={{uri: this.state.user.profile.avatar_url}}/>
+                </TouchableWithoutFeedback>
+
+              </View>
+              <Text style={{fontSize: 12, padding:5}}>{this.state.user.bio}</Text>
+              <View style={{flexDirection:'row'}}>
+                {this.state.isItMe ?
+                <Button style={{flex:1, margin:2}} onPress={()=>{}}>
+                  <Text style={{color:'#ffffff', fontWeight:'bold', fontSize:15}} > موجودی {EnglishNumberToPersianPrice(this.state.user.money)} تومان</Text>
+                  <Icon name='credit-card' color='#ffffff'/>
+                </Button>
+                :
+                <View style={{flex:1, margin:2}}>
+                  {this.state.user.you_follow ?
+                    (
+                      <Button success block onPress={this._followUser}>
+                        <Text style={{color:'#ffffff', fontWeight:'bold', fontSize:15}} >دنبال میکنم</Text>
+                        <Icon name='person' color='#ffffff'/>
+                      </Button>
+                    )
+                    :
+                    (
+                      <Button block onPress={this._followUser}>
+                        <Text style={{color:'#ffffff', fontWeight:'bold', fontSize:15}} >دنبال کن</Text>
+                        <Icon name='person-add' color='#ffffff'/>
+                      </Button>
+                    )}
+
+                </View>
+               }
+               <Button style={{margin:2, backgroundColor:'white'}} onPress={()=>{this.props.navigation.navigate('ReviewPage', {token: this.state.token, username: this.state.username})}}>
+                 <Text style={{color:'gray'}}>
+                  <Text>(</Text>
+                  <Text>{EnglighNumberToPersian(this.state.user.profile.count_of_rates)}</Text>
+                  <Text>)</Text>
+                 </Text>
+                 <Rating
+                   imageSize={12}
+                   readonly
+                   startingValue={this.state.user.profile.score}
+                   style = {{margin: 3}}
+                   />
+               </Button>
+              </View>
+
+
+              <View style={{flexDirection:'row'}}>
+              {this.state.user.location &&
+                <TouchableWithoutFeedback  onPress={()=>{}}>
+                  <View style={styles.contactButton}>
+                    <Text style={{color:'#ffffff', fontWeight:'bold', fontSize:15}} >آدرس</Text>
+                    <Icon name='my-location' color='#ffffff'/>
+                  </View>
+                </TouchableWithoutFeedback>
+              }
+              {this.state.user.phone_number &&
+                <TouchableWithoutFeedback  onPress={()=>{}}>
+                  <View style={styles.contactButton}>
+                    <Text style={{color:'#ffffff', fontWeight:'bold', fontSize:15}} >تماس</Text>
+                    <Icon name='call' color='#ffffff'/>
+                  </View>
+                </TouchableWithoutFeedback> }
+              </View>
+            </View>
+          }
+
+
+
           <FlatList
-           data={this.state.data.posts}
+           data={this.state.data}
            contentContainerStyle={styles.list}
            numColumns = {3}
            keyExtractor={item => item.uuid}
@@ -185,51 +267,18 @@ class ProfilePage extends Component {
            onEndReachedThreshold={10}
            ListFooterComponent={this.renderFooter}
            renderItem={({item}) =>
-               <Image style={{width:getPostWidth(), height:getPostWidth() , borderRadius:2 , margin: 2, borderColor:'#E0E0E0', borderWidth:1}} source={{uri: item.image_url}}/>
+               <Image style={{width:getPostWidth(), height:getPostWidth() , borderRadius:2 , margin: 2, borderColor:'#E0E0E0', borderWidth:1}} source={{uri: item.post.image_url_0}}/>
 
            }/>
-        }
-       </View>
-       <Footer>
-        <FooterTab style={{backgroundColor: '#ffffff'}}>
-          <Button vertical onPress={() => {
-            this.setState({currentTab: 0})
-          }}>
-            <Icon name="view-day"  size={28}/>
 
-          </Button>
-          <Button vertical >
-            <Icon name="stars"  size={28}/>
-
-          </Button>
-          <Button vertical onPress={()=>{}}>
-            <Icon name="add-circle-outline" color='#9E9E9E' size={28}/>
-
-          </Button>
-          <Button vertical  onPress={() => {
-            // this.setState({currentTab: 3})
-            // Actions.historyPage()
-          }}>
-            <Icon active name="history"  size={28} />
-
-          </Button>
-          <Button vertical onPress={() => {
-            // this.props.userSelected('@me');
-            // this.setState({currentTab: 4})
-            // Actions.profilePage()
-          }}>
-            <Icon name="person" size={28}/>
-          </Button>
-        </FooterTab>
-      </Footer>
-     </Container>
+     </View>
 
    )
  }
 }
 
 function SettingOrFollowButton(props){
-  let itIsMe = props.itIsMe;
+  let itIsMe = props.isItMe;
   let following = props.following;
   if (itIsMe) {
     return(
@@ -337,13 +386,10 @@ const styles = StyleSheet.create({
 
 function mapStateToProps(state){
  return{
-   activeUser : state.activeUser,
-   userInfo : state.userInfo,
-   activeToken: state.activeToken,
-   activeUserData : state.userData
+
  };
 }
 function matchDispatchToProps(dispatch){
- return bindActionCreators({getUserThunk: getUserThunk}, dispatch)
+ return bindActionCreators({}, dispatch)
 }
 export default connect(mapStateToProps, matchDispatchToProps)(ProfilePage);

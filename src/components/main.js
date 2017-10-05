@@ -9,9 +9,10 @@ import BuyItemPage from './buyItemPage.js';
 import {EnglighNumberToPersian} from '../utility/NumberUtils.js'
 import {initData, loadMore, updatePost} from '../actions/feedsActions.js'
 import {setUnreadNotifications} from '../actions/notificationActions.js'
+// import {addFeed, clearData} from '../actions/notReadFeedsActions.js'
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
-import {initBoughtTransactions, initSoldTransactions, getTransactionNotifications} from '../requestServer.js';
+import {initBoughtTransactions, initSoldTransactions, getTransactionNotifications,updatePost as requestUpdatePost } from '../requestServer.js';
 import {initBoughtData, initSoldData} from '../actions/transactionsActions.js';
 import SInfo from 'react-native-sensitive-info';
 
@@ -113,6 +114,8 @@ class Main extends Component{
 
 
 
+
+
   makeRemoteRequest = (token) => {
     const { page } = this.state;
     this.setState({ loading: true });
@@ -148,7 +151,7 @@ class Main extends Component{
           refreshing: false,
           next_page : res.next,
           visit_version : res.visit_version
-        });
+        }, ()=>{this.props.addFeed(res.results)});
       })
       .catch(error => {
         this.setState({ error, loading: false });
@@ -158,46 +161,14 @@ class Main extends Component{
 
 
   handleRefresh = (token) => {
-    _uuids = []
-    len = this.props.data.length;
-    for (i in this.props.data) {
-      feed = this.props.data[len - i - 1]
-      if (!feed.read) {
-        _uuids.push(feed.uuid)
-      }else{
-        break
-      }
-    }
+
      this.setState(
        {
          page: 1,
          refreshing: true
        },
        () => {
-
-         fetch(read_feeds_url,
-           {
-             method: 'POST',
-             headers: {
-               'Accept': 'application/json',
-               'Content-Type': 'application/json',
-               'Authorization': 'Token ' + token
-             },
-             body: JSON.stringify({
-               visiting_version : this.state.visit_version,
-               uuids : _uuids
-             })
-           }
-         )
-           .then(res => {
-             console.log(_uuids);
-             if (res.status === 200) {
-             this.makeRemoteRequest(this.state.token)
-           }})
-           .catch(error => {
-             this.setState({ error, loading: false });
-             console.log(error);
-           });
+        this.makeRemoteRequest(token)
        }
      );
    };
@@ -208,15 +179,15 @@ class Main extends Component{
           page: this.state.page + 1
         },
         () => {
-          setTimeout(()=>this.makeRemoteRequest(this.state.token), 5000)
+          this.makeRemoteRequest(this.state.token)
         }
       );
     };
 
 
 
-  openProfilePage(user_id){
-    this.props.userSelected(user_id);
+  openProfilePage = (username) =>{
+   this.props.navigation.navigate('OtherProfilePage', {username})
   }
   renderFooter = () => {
       if (!this.state.loading) return null;
@@ -235,6 +206,9 @@ class Main extends Component{
 
   setSelectedItemToBuy = (item, reposter)=>{
     this.props.navigation.navigate('BuyItemPage', {post: item, token: this.state.token, reposter: reposter})
+  }
+  openCommentPage = (post_uuid, post_title) =>{
+    this.props.navigation.navigate('CommentPage', {token: this.state.token, post_uuid, post_title  })
   }
 
   showInvestModal= (item)=>{
@@ -324,63 +298,36 @@ class Main extends Component{
 
   refreshSelectedPostToInvest = (post)=>{
     this.setState({refreshin_selected_post_to_invest: true})
-    fetch(posts_url+post.uuid,  {
-       method: 'GET',
-       headers: {
-         'Accept': 'application/json',
-         'Content-Type': 'application/json',
-         'Authorization': 'Token ' + this.state.token
-       }
-     }).then( res => {
-       this.setState({refreshin_selected_post_to_invest: false})
-       return res.json();
-     }).then(
-       (resjes) =>{
-         this.setState({selected_item_to_invest: resjes})
-       }
-     ).catch(error => {
-       Toast.show({
-               text: 'خطایی بوجود آمد',
-               position: 'bottom',
-               duration : 3000,
-               type: 'danger'
-             })
-     })
+    onSuccess = (res) =>{
+      this.setState({selected_item_to_invest: res, refreshin_selected_post_to_invest: false})
+    }
+    onError = (error) =>{
+      this.setState({refreshin_selected_post_to_invest: false})
+      Toast.show({
+              text: 'خطایی بوجود آمد',
+              position: 'bottom',
+              duration : 3000,
+              type: 'danger'
+            })
+    }
+    requestUpdatePost(this.state.token, post.uuid, onSuccess, onError)
+
   }
   updatePost = (post)=>{
-    fetch(posts_url+post.uuid,  {
-       method: 'GET',
-       headers: {
-         'Accept': 'application/json',
-         'Content-Type': 'application/json',
-         'Authorization': 'Token ' + this.state.token
-       }
-     }).then( res => {
-
-       return res.json();
-     }).then(
-       (resjes) =>{
-        //  this.setState((state) => {
-        //    // copy the map rather than modifying state.
-        //    const data = state.data;
-        //    index = data.findIndex((item) => item.post.uuid === post.uuid);
-        //    feed = data[index]
-        //    feed.post = resjes
-        //   //  data[index] = feed
-        //    data[index] = feed
-        //    return {data};
-        //  });
-          this.props.updatePost(resjes)
-       }
-     ).catch(error => {
-       console.error(error)
-       Toast.show({
-               text: 'خطایی بوجود آمد',
-               position: 'bottom',
-               duration : 3000,
-               type: 'danger'
-             })
-     })
+    this.setState({refreshin_selected_post_to_invest: true})
+    onSuccess = (res) =>{
+      this.props.updatePost(res)
+    }
+    onError = (error) =>{
+      console.error(error)
+      Toast.show({
+              text: 'خطایی بوجود آمد',
+              position: 'bottom',
+              duration : 3000,
+              type: 'danger'
+            })
+    }
+    requestUpdatePost(this.state.token, post.uuid, onSuccess, onError)
 
   }
 
@@ -550,7 +497,8 @@ class Main extends Component{
                 showInvestModal = {this.showInvestModal}
                 token = {this.state.token}
                 current_location = {this.state.current_location}
-                openProfilePage = {this.props.openProfilePage}
+                openProfilePage = {this.openProfilePage}
+                openCommentPage = {this.openCommentPage}
               />
             }/>
         </View>
@@ -566,6 +514,7 @@ function mapStateToProps(state){
     data : state.feedsReducer,
     notification : state.notificationReducer,
     newMessages : state.unreadNotificationsReducer,
+    // notReadFeeds : state.notReadFeedsReducer
   };
 }
 

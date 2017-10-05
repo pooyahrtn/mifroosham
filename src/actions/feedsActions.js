@@ -1,7 +1,7 @@
 
 export const LOAD_MORE = 'LOAD_MORE';
 export const INIT_FEEDS = 'INIT_FEEDS';
-export const UPDATE_POST = 'UPDATE_POST'
+export const UPDATE_POST = 'UPDATE_POST';
 
 
 export const initData = (data) => {

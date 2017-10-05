@@ -1,13 +1,10 @@
 import React, { Component } from 'react';
 import {Root as NativeRoot}  from "native-base";
 import {AsyncStorage, View, Text, Platform, StyleSheet, PixelRatio, Button, Image} from 'react-native';
-
+import ReviewPage from './components/ReviewPage.js';
 import Main from './components/main.js';
-
-
 import SoldPage from './components/SoldPage.js';
 import BoughtPage from './components/BoughtPage.js';
-import ProfilePageWithHeader from './components/profilePageWithHeader.js';
 import TakePhotoPage from './components/takePhotoPage.js';
 import NewPostPage from './components/newPostPage.js';
 import BuyItemPage from './components/buyItemPage.js';
@@ -23,7 +20,7 @@ import {Icon} from 'react-native-elements'
 import {NavigationComponent} from 'react-native-material-bottom-navigation'
 import SInfo from 'react-native-sensitive-info';
 import {addFocusedNotification} from './actions/notificationActions.js';
-
+import CommentPage from './components/commentsPage.js';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 
@@ -67,6 +64,9 @@ const MyApp = TabNavigator({
 
   HistoryPage:{
     screen: HistoryPage,
+  },
+  ProfilePage:{
+    screen: ProfilePage,
   }
 
 }, {
@@ -93,6 +93,10 @@ const MyApp = TabNavigator({
        HistoryPage: {
          icon : <Icon size={24} color="#BDBDBD" name="history" />,
          activeIcon : <Icon size={24} color="#455A64" name="history" />
+       },
+       ProfilePage: {
+         icon : <Icon size={24} color="#BDBDBD" name="account-box" />,
+         activeIcon : <Icon size={24} color="#455A64" name="account-box" />
        }
      }
    }
@@ -123,6 +127,15 @@ const routeConfigs = {
   },
   InboxTabPage:{
     screen: InboxTabPage
+  },
+  CommentPage:{
+    screen: CommentPage,
+  },
+  OtherProfilePage:{
+    screen: ProfilePage,
+  },
+  ReviewPage:{
+    screen: ReviewPage
   }
 
 }
@@ -197,7 +210,8 @@ class App extends Component{
 
     //TODO: it means user notification token is not saved when user first sign up or login
     onIds(device) {
-      if(this.state.logged){fetch(my_notification_url
+      if(this.state.logged){
+        fetch(my_notification_url
       ,
          {
            method: 'POST',

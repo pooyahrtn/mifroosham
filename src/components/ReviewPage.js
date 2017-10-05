@@ -1,11 +1,12 @@
 import React, { Component , PureComponent} from 'react';
 import {connect} from 'react-redux';
-import {FlatList, View, Text, Dimensions, TextInput, ActivityIndicator, StatusBar, Modal, TouchableWithoutFeedback, Keyboard} from 'react-native';
+import {FlatList, View, Text, Dimensions, TextInput, ActivityIndicator,
+   StatusBar, Modal, TouchableWithoutFeedback, Image} from 'react-native';
 import {bindActionCreators} from 'redux';
 import {getTimeAgo} from '../utility/TimerUtil.js';
 import {Toast, Header, Title, Button} from 'native-base';
-import {loadPostComments, sendComment, updatePost as requestUpdatePost, reportComment} from '../requestServer.js'
-import {Icon, Avatar} from 'react-native-elements';
+import {userReviews, reportComment} from '../requestServer.js'
+import {Icon, Avatar, Rating} from 'react-native-elements';
 import { updatePost} from '../actions/feedsActions.js';
 import SInfo from 'react-native-sensitive-info';
 
@@ -14,35 +15,37 @@ class CommentItem extends PureComponent{
 
   render(){
     return(
-    <View style={{padding: 5, backgroundColor:'white', margin: 5, borderRadius: 4}}>
-      <View style={{flexDirection:'row', alignItems:'center'}}>
-        <Icon name='more-vert' color='#9E9E9E' onPress={()=>{this.props.selectComment(this.props)}}/>
-        <Text style={{fontWeight:'100', fontSize: 11}}>{getTimeAgo(new Date(this.props.time).getTime()/1000)}</Text>
-        <Text style={{flex:1, margin: 5, fontWeight:'bold', textAlign:'right'}}>{this.props.user.profile.full_name}</Text>
-        <Avatar rounded source={{uri:this.props.user.profile.avatar_url}}/>
+    <View style={{ backgroundColor:'white', margin: 5, borderRadius: 4, flexDirection:'row'}}>
+      <View style={{flex:1, padding:3}}>
+          <View style={{flexDirection:'row', alignItems:'center'}}>
+            <Rating
+              imageSize={12}
+              readonly
+              startingValue={this.props.rate}
+              style = {{margin: 3}}
+              />
+            <Text style={{flex:1, padding: 3, fontWeight:'bold', textAlign:'right'}}>{this.props.reviewer.profile.full_name}</Text>
+            <Avatar rounded source={{uri:this.props.reviewer.profile.avatar_url}}/>
+          </View>
+          {this.props.comment &&
+            <Text>{this.props.comment}</Text>
+          }
       </View>
-      <Text>{this.props.text}</Text>
-
+        <Image style={{height: 80, width: 80, margin: 1, borderRadius:2}} source={{uri: this.props.image_url}}/>
     </View>)
 
   }
 }
 
-class CommentPage extends Component {
+class ReviewPage extends Component {
   static navigationOptions = {
     tabBarLabel: 'اتفاقات؟',
   }
-  post_uuid = this.props.navigation.state.params.post_uuid
   token = this.props.navigation.state.params.token
-  post_title = this.props.navigation.state.params.post_title
+  username = this.props.navigation.state.params.username
 
  componentDidMount(){
    this.makeRemoteRequest(this.token)
-   SInfo.getItem('username', {
-   sharedPreferencesName: 'mifroosham',
-   keychainService: 'mifroosham'}).then(value => {
-       this.setState({my_username: value})
-   });
  }
  constructor(props){
    super(props);
@@ -52,12 +55,7 @@ class CommentPage extends Component {
      refreshing : false,
      page :1,
      data: [],
-     height: 60,
-     comment : null,
-     loading_add_comment : false,
-     selected_comment : undefined,
-     show_comment_modal : false,
-     my_username : undefined,
+     show_comment_modal: false,
      show_report_options : false,
      report_inappropriate : false,
      report_insult: false,
@@ -70,14 +68,6 @@ class CommentPage extends Component {
 
 
 
- isItMe = (comment)=>{
-   if(comment && this.state.my_username){
-     if(comment.user.username === this.state.my_username){
-       return true;
-     }
-   }
-   return false;
- }
 
  toggleReport = (report_name) =>{
     reports = {report_other : false, report_spam: false, report_insult: false, report_inappropriate: false }
@@ -96,39 +86,17 @@ class CommentPage extends Component {
        loading: false,
        refreshing: false,
        visit_version : res.visit_version,
-       page : this.state.page + 1
+       page: this.state.page + 1
      });
    };
    let onError = (error) =>{
      this.setState({ error, loading: false });
      console.log(error);
    };
-   loadPostComments(page , this.post_uuid, token, onSuccess, onError)
+   userReviews(token , this.state.page ,this.username, onSuccess, onError)
 
  };
 
- addComment = ()=>{
-   this.setState({loading_add_comment: true})
-   let onSuccess = (res)=>{
-     console.log(res);
-     newPost = res
-     newPost.time = new Date()
-     this.setState({loading_add_comment: false, comment: '', data: [...this.state.data, newPost]})
-     this.updatePost()
-
-   }
-   let onFailed = (error) =>{
-     console.log('send_post_error', error);
-     this.setState({loading_add_comment : false})
-   }
-   sendComment(this.token, this.post_uuid, this.state.comment, onSuccess, onFailed)
- }
-
- updateSize = (height) => {
-  this.setState({
-    height
-  });
-}
 
 
  requestReportComment = ()=>{
@@ -163,36 +131,14 @@ class CommentPage extends Component {
    this.setState({show_comment_modal: false})
  }
 
- updatePost = ()=>{
-   let onSuccess = (res) =>{
-     this.props.updatePost(res)
-   }
-   let onError = (error) =>{
-     Toast.show({
-             text: 'خطایی بوجود آمد',
-             position: 'bottom',
-             duration : 3000,
-             type: 'danger'
-           })
-   }
-   requestUpdatePost(this.token, this.post_uuid, onSuccess, onError)
- }
+
 
  selectComment = (comment) =>{
    this.setState({selected_comment : comment, show_comment_modal: true, show_report_options: false})
  }
 
  render(){
-   const {newValue, height} = this.state;
 
-    let newStyle = {
-      height,
-      margin: 5,
-      flex:1,
-      borderRadius: 2,
-      borderWidth:1,
-      borderColor:'#E0E0E0'
-    }
 
    return(
      <View style={{flex:1}}>
@@ -203,7 +149,7 @@ class CommentPage extends Component {
         />
 
        <View style= {{flexDirection:'column',alignItems: 'center',justifyContent: 'center' ,flex:1}}>
-           <Title style={{ color: 'black', fontWeight:'bold'}}>{this.post_title}</Title>
+           <Title style={{ color: 'black', fontWeight:'bold'}}>{this.username}</Title>
        </View>
 
 
@@ -217,24 +163,13 @@ class CommentPage extends Component {
        <View style={{flex: 1, justifyContent:'center', backgroundColor:'rgba(0, 0, 0, 0.70)'}}>
          <View style={{borderRadius: 2, backgroundColor:'white', padding:5, margin: 5}}>
           {!this.state.show_report_options && (
-            this.isItMe(this.state.selected_comment)  ?
-              (
-                <Button block light>
-                  <Text style={{}}>حذف</Text>
-                  <Icon  name='delete'/>
-                </Button>
 
-              )
-              :
-              (
-                <Button block light onPress={()=>{this.setState({show_report_options: true, report_other: true})}}>
-                  <Text style={{}}>گزارش</Text>
-                  <Icon  name='report'/>
-                </Button>
+              <Button block light onPress={()=>{this.setState({show_report_options: true, report_other: true})}}>
+                <Text style={{}}>گزارش</Text>
+                <Icon  name='report'/>
+              </Button>
 
-              )
-          )
-
+            )
           }
 
           {this.state.show_report_options &&
@@ -301,7 +236,6 @@ class CommentPage extends Component {
        </View>
      </Modal>
        <FlatList data={this.state.data}
-           ref={(input) => {this.flatList = input; }}
            keyExtractor={item => item.uuid}
            renderItem={({item}) =>
              <CommentItem
@@ -309,18 +243,6 @@ class CommentPage extends Component {
                 selectComment = {this.selectComment}
              />
            }/>
-        <View style={{backgroundColor:'white',   width:Dimensions.get('window').width, flexDirection:'row', alignItems:'center'}}>
-          <TextInput value={this.state.comment} multiline={true} onChangeText={(text) => {this.setState({comment: text})}} style={[newStyle]} placeholder='نظر شما...' onContentSizeChange={(e) => this.updateSize(e.nativeEvent.contentSize.height)}/>
-          {this.state.loading_add_comment ?
-            (
-              <ActivityIndicator />
-            )
-            :
-            (
-              <Icon name='send' onPress={this.addComment} style={{padding:10}}/>
-            )}
-
-        </View>
      </View>
 
    )
@@ -335,4 +257,4 @@ function mapStateToProps(state){
 function matchDispatchToProps(dispatch){
  return bindActionCreators({updatePost}, dispatch)
 }
-export default connect(mapStateToProps, matchDispatchToProps)(CommentPage);
+export default connect(mapStateToProps, matchDispatchToProps)(ReviewPage);

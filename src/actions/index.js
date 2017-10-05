@@ -1,5 +1,3 @@
-import {me, matin, kia, bahram} from '../myProfileData.js'
-
 
 
 

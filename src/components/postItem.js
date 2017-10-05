@@ -162,7 +162,7 @@ componentDidMount(){
       repost_color = '#000000'
     }
     return (
-      <Card>
+      <View style={{backgroundColor:'#fdfdfd', borderRadius:5, margin:4, marginBottom:7}}>
         {this.props.reposter &&
 
           <View style={{flexDirection: 'row', alignItems: 'center', justifyContent:'flex-end', padding:2 }}>
@@ -210,10 +210,16 @@ componentDidMount(){
             </TouchableWithoutFeedback>
 
           }
-          <Text style={styles.likeText}>{EnglighNumberToPersian(this.state.n_reposts)}</Text>
-          <Icon type='evilicon'  name='retweet' color={repost_color} style={styles.imageButtons} size={28} onPress={this.repostPost}/>
-          <Text style={styles.likeText}>{EnglighNumberToPersian(this.state.n_likes)}</Text>
-          <Icon type='evilicon'  name='comment' style={styles.imageButtons} size={28}/>
+          {this.props.buyable && (
+              <View style={{flexDirection:'row', alignItems:'center'}}>
+                <Text style={styles.likeText}>{EnglighNumberToPersian(this.state.n_reposts)}</Text>
+                <Icon type='evilicon'  name='retweet' color={repost_color} style={styles.imageButtons} size={28} onPress={this.repostPost}/>
+              </View>
+
+          )}
+
+          <Text style={styles.likeText}>{EnglighNumberToPersian(this.props.post.n_comments)}</Text>
+          <Icon type='evilicon'  name='comment' style={styles.imageButtons} onPress={()=>{this.props.openCommentPage(this.props.post.uuid, this.props.post.title)}} size={28}/>
           <Text style={styles.likeText}>{EnglighNumberToPersian(this.state.n_likes)}</Text>
           <Icon type='evilicon'  name='heart' color={heart_color} style={styles.imageButtons} size={28} onPress={this.likePost}/>
 
@@ -291,7 +297,8 @@ componentDidMount(){
           </View>
         }
         </View>
-     </Card>
+
+     </View>
     );
   }
 }
