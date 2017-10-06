@@ -11,6 +11,8 @@ import ImagePicker from 'react-native-image-crop-picker';
 import SInfo from 'react-native-sensitive-info';
 import {userDetail, userPosts, updateProfilePhoto, followUser} from '../requestServer.js';
 import {EnglighNumberToPersian} from '../utility/NumberUtils.js';
+import {initProfilePost, loadMoreProfilePost, updateProfilePost} from '../actions/profilePostActions.js';
+import {user_posts} from '../serverAddress.js'
 
 
 class ProfilePage extends Component {
@@ -50,7 +52,7 @@ class ProfilePage extends Component {
    super(props);
 
    this.state={
-     data: [],
+     next_page : user_posts,
      page : 1,
      username : undefined,
      isItMe : false,
@@ -61,6 +63,19 @@ class ProfilePage extends Component {
      user : undefined
    }
  }
+
+ handleRefresh = () => {
+
+    this.setState(
+      {
+        page: 1,
+        refreshing: true
+      },
+      () => {
+       this.userPostsRequest(this.state.token, this.state.username)
+      }
+    );
+  };
 
 
  renderFooter = () => {
@@ -105,13 +120,21 @@ _updateProfilePhoto = (image) =>{
  userPostsRequest = (token, username) => {
    const { page } = this.state;
    this.setState({ loading: true });
+   next_page = user_posts + username + '/';
+   if(page !== 1){
+     next_page = this.state.next_page
+   }
    let onSuccess = (res) =>{
+     if (page === 1){
+       this.props.initProfilePost(res.results)
+     }else{
+       this.props.loadMoreProfilePost(res.results)
+     }
      this.setState({
-       data: page === 1 ? res.results : [...this.state.data, ...res.results],
        error: res.error || null,
        loading: false,
        refreshing: false,
-       page : this.state.page + 1
+       next_page : res.next
      });
    }
 
@@ -119,7 +142,7 @@ _updateProfilePhoto = (image) =>{
      this.setState({ error, loading: false });
      console.log(error);
    }
-   userPosts(token, page, username, onSuccess, onFailed)
+   userPosts(token, next_page, username, onSuccess, onFailed)
  };
 
  _followUser = ()=>{
@@ -139,6 +162,10 @@ _updateProfilePhoto = (image) =>{
            })
    }
    followUser(this.state.token, this.state.username, onSuccess, onFailed)
+ }
+
+ openPostDetail = (profilePost) =>{
+   this.props.navigation.navigate('PostDetailPage', {token: this.state.token, profilePost, user:this.state.user})
  }
 
  render(){
@@ -257,17 +284,20 @@ _updateProfilePhoto = (image) =>{
 
 
           <FlatList
-           data={this.state.data}
+           data={this.props.data}
            contentContainerStyle={styles.list}
            numColumns = {3}
            keyExtractor={item => item.uuid}
            refreshing = {this.state.refreshing}
-           onRefresh={()=>{}}
+           onRefresh={this.handleRefresh}
            onEndReached={this.handleLoadMore}
            onEndReachedThreshold={10}
            ListFooterComponent={this.renderFooter}
            renderItem={({item}) =>
-               <Image style={{width:getPostWidth(), height:getPostWidth() , borderRadius:2 , margin: 2, borderColor:'#E0E0E0', borderWidth:1}} source={{uri: item.post.image_url_0}}/>
+              <TouchableWithoutFeedback onPress={()=>this.openPostDetail(item)}>
+                <Image style={{width:getPostWidth(), height:getPostWidth() , borderRadius:2 , margin: 2, borderColor:'#E0E0E0', borderWidth:1}}
+                source={{uri: item.post.image_url_0}} />
+              </TouchableWithoutFeedback>
 
            }/>
 
@@ -386,10 +416,10 @@ const styles = StyleSheet.create({
 
 function mapStateToProps(state){
  return{
-
+   data: state.profilePostReducer
  };
 }
 function matchDispatchToProps(dispatch){
- return bindActionCreators({}, dispatch)
+ return bindActionCreators({initProfilePost, loadMoreProfilePost, updateProfilePost}, dispatch)
 }
 export default connect(mapStateToProps, matchDispatchToProps)(ProfilePage);

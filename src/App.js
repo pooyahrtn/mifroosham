@@ -5,6 +5,7 @@ import ReviewPage from './components/ReviewPage.js';
 import Main from './components/main.js';
 import SoldPage from './components/SoldPage.js';
 import BoughtPage from './components/BoughtPage.js';
+import PostDetailPage from './components/postDetailPage.js';
 import TakePhotoPage from './components/takePhotoPage.js';
 import NewPostPage from './components/newPostPage.js';
 import BuyItemPage from './components/buyItemPage.js';
@@ -136,6 +137,9 @@ const routeConfigs = {
   },
   ReviewPage:{
     screen: ReviewPage
+  },
+  PostDetailPage:{
+    screen: PostDetailPage
   }
 
 }

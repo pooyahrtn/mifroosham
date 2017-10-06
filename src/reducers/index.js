@@ -6,6 +6,7 @@ import soldTransactionsReducer from './soldTransactionsReducer.js';
 import boughtTransactionsReducer from './boughtTransactionsReducer';
 import notificationReducer from './notificationReducer.js';
 import unreadNotificationsReducer from './unreadNotificationsReducer.js';
+import profilePostReducer from './profilePostReducer.js';
 
 const allReducers= combineReducers({
 
@@ -15,7 +16,7 @@ const allReducers= combineReducers({
   soldTransactionsReducer,
   notificationReducer,
   unreadNotificationsReducer,
-
+  profilePostReducer,
 });
 
 

@@ -138,8 +138,8 @@ export const reportComment = (token, comment_uuid, status, onSuccess, onFailed) 
   return basicPost(report_comment_url, {comment_uuid, status}, token, onSuccess, onFailed)
 }
 
-export const userPosts = (token, page, username, onSuccess, onFailed) => {
-  return basicGet(user_posts+username+'/?page='+ page, token, onSuccess, onFailed)
+export const userPosts = (token, url, username, onSuccess, onFailed) => {
+  return basicGet(url, token, onSuccess, onFailed)
 }
 
 export const userDetail = (token, username, onSuccess, onFailed) =>{
@@ -175,6 +175,10 @@ export function updateProfilePhoto(token, image, onSuccess, onFailed){
 
 export function followUser(token, username, onSuccess, onFailed){
   return basicPut(follow_user_url+username, {}, token, onSuccess, onFailed)
+}
+
+export const getFeeds = (token, page_url, onSuccess, onFailed) =>{
+  return basicGet(page_url, token, onSuccess, onFailed)
 }
 
 export const userReviews = (token, page, username, onSuccess, onFailed) => {
