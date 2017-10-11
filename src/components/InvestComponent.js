@@ -4,6 +4,7 @@ import {View, Modal, TouchableHighlight,FlatList, ActivityIndicator,
 import { Icon } from 'react-native-elements';
 import {EnglighNumberToPersian} from '../utility/NumberUtils.js'
 import {invest_helps_url, request_invest_url} from '../serverAddress.js';
+import {updatePost as requestUpdatePost } from '../requestServer.js';
 import {Toast} from 'native-base';
 export default class InvestComponent extends Component{
 
@@ -77,7 +78,7 @@ export default class InvestComponent extends Component{
                 type: 'success'
               })
         this.props.hideInvestModal()
-        this.props.updatePost(this.props.selected_item_to_invest)
+        this.refreshSelectedPostToInvest(this.props.selected_item_to_invest)
       }else if(res.status === 403){
         this.setState({request_invest_loading: false})
         this.props.hideInvestModal()
@@ -110,9 +111,11 @@ export default class InvestComponent extends Component{
     this.setState({refreshin_selected_post_to_invest: true})
     onSuccess = (res) =>{
       this.setState({selected_item_to_invest: res, refreshin_selected_post_to_invest: false})
+      this.props.updatePost(res)
     }
     onError = (error) =>{
       this.setState({refreshin_selected_post_to_invest: false})
+      console.error(error)
       Toast.show({
               text: 'خطایی بوجود آمد',
               position: 'bottom',
@@ -120,7 +123,7 @@ export default class InvestComponent extends Component{
               type: 'danger'
             })
     }
-    this.props.requestUpdatePost(this.props.token, post.uuid, onSuccess, onError)
+    requestUpdatePost(this.props.token, post.uuid, onSuccess, onError)
 
   }
 

@@ -1,4 +1,5 @@
 export const base_url = 'http://192.168.42.156:8000/';
+export const base_search = base_url + 'search/';
 export const sign_up_url = base_url+'profiles/sign_up/';
 export const login_url = base_url+'profiles/login/';
 export const my_profile = base_url+'profiles/me/';
@@ -34,3 +35,5 @@ export const report_comment_url = base_url + 'report/comment/';
 export const user_posts = base_url + 'posts/users/';
 export const follow_user_url = base_url + 'profiles/follow/';
 export const user_reviews_url = base_url +'profiles/user_reviews/';
+export const username_search_url = base_search + 'username/';
+export const post_title_search = base_search + 'post_title/';

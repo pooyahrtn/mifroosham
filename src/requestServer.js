@@ -1,6 +1,7 @@
 import {bought_transactions_url, sold_transactions_url, transaction_notifications_url,
   read_transaction_notifications, post_comments_url, send_comment_url, posts_url, report_comment_url,
-  read_feeds_url, base_url, user_posts, update_profile_photo_url,follow_user_url, user_reviews_url } from './serverAddress.js'
+  read_feeds_url, base_url, user_posts, update_profile_photo_url,follow_user_url, user_reviews_url, username_search_url,
+post_title_search } from './serverAddress.js'
 
 function basicGet(url, token, onSuccess, onFailed ){
   fetch(url,
@@ -14,6 +15,22 @@ function basicGet(url, token, onSuccess, onFailed ){
     }
   )
     .then(res => res.json())
+    .then(onSuccess)
+    .catch(onFailed);
+}
+
+function basicGetWithStatus(url, token, onSuccess, onFailed){
+  fetch(url,
+    {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': 'Token ' + token
+      }
+    }
+  )
+    .then(res => {return {body: res.json(), status: res.status}})
     .then(onSuccess)
     .catch(onFailed);
 }
@@ -183,4 +200,26 @@ export const getFeeds = (token, page_url, onSuccess, onFailed) =>{
 
 export const userReviews = (token, page, username, onSuccess, onFailed) => {
   return basicGet(user_reviews_url+username+'/?page='+ page, token, onSuccess, onFailed)
+}
+
+export const searchUsername = (token, next_page, username, onSuccess, onFailed) =>{
+  url = next_page
+  if(!username){
+    return
+  }
+  if(url === -1){
+    url = username_search_url + username+'/'
+  }
+  return basicGet(url, token, onSuccess, onFailed)
+}
+
+export function searchPostTitle (token, next_page, username, onSuccess, onFailed){
+  url = next_page
+  if(!username){
+    return
+  }
+  if(url === -1){
+    url = post_title_search + username+'/'
+  }
+  return basicGet(url, token, onSuccess, onFailed)
 }

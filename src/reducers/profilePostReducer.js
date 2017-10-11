@@ -2,27 +2,37 @@ import { UPDATE_PROFILE_POST, INIT_PROFILE_POST, LOAD_MORE_PROFILE_POST} from '.
 import {REHYDRATE} from 'redux-persist/constants'
 
 
-export default function feedsReducer(state=[], action){
+export default function feedsReducer(state={}, action){
   switch (action.type) {
     case INIT_PROFILE_POST:{
-      data= action.payload
-      return data;
+      const {username , data} = action.payload
+      state[username] = data
+      return state
     }
     case LOAD_MORE_PROFILE_POST:{
-      return [...state, ...action.payload]
+      const {username , data} = action.payload
+      prevData = state[username];
+      state[username] = [...prevData, ...data]
+      return state;
     }
     case UPDATE_PROFILE_POST:{
-      data = state
+      const {username , post} = action.payload
+      data = state[username]
+      if(!data){
+        return state
+      }
       for (var i = 0; i < data.length; i++) {
-        if(data[i].post.uuid === action.post.uuid){
-          data[i].post = action.post
+        if(data[i].post.uuid === post.uuid){
+          data[i].post = post
+          break
         }
       }
-      return data;
+      state[username] = data
+      return state;
     }
     case REHYDRATE:{
       const savedData = action.payload.profilePostReducer || state;
-      return [...state, ...savedData];
+      return {...state, ...savedData};
     }
     break;
   }

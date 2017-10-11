@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import {View, Modal, TouchableHighlight,FlatList, ActivityIndicator,
   AsyncStorage, Alert, PermissionsAndroid, Text, TextInput, TouchableWithoutFeedback, StatusBar} from 'react-native';
 import { Icon } from 'react-native-elements';
-import PostItem from './postItem.js';
+import PostItem from './PostItem/postItem.js';
 import {Container, Header, Title, Toast} from 'native-base';
 import {base_url, read_feeds_url, invest_helps_url, request_invest_url, posts_url} from '../serverAddress.js';
 import BuyItemPage from './buyItemPage.js';
@@ -12,7 +12,7 @@ import {setUnreadNotifications} from '../actions/notificationActions.js'
 import {requestLocation} from '../utility/locationUtility.js'
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
-import {initBoughtTransactions, initSoldTransactions, getTransactionNotifications,updatePost as requestUpdatePost, getFeeds } from '../requestServer.js';
+import {initBoughtTransactions, initSoldTransactions, getTransactionNotifications,getFeeds } from '../requestServer.js';
 import {initBoughtData, initSoldData} from '../actions/transactionsActions.js';
 import SInfo from 'react-native-sensitive-info';
 import InvestComponent from './InvestComponent.js';
@@ -32,7 +32,6 @@ class Main extends Component{
       refreshing : false,
       page :1,
       token : null,
-      visit_version : 0,
       current_location : undefined,
       show_invest_modal : false,
       selected_item_to_invest : undefined,
@@ -185,21 +184,7 @@ class Main extends Component{
 
 
   updatePost = (post)=>{
-    this.setState({refreshin_selected_post_to_invest: true})
-    onSuccess = (res) =>{
-      this.props.updatePost(res)
-    }
-    onError = (error) =>{
-      console.error(error)
-      Toast.show({
-              text: 'خطایی بوجود آمد',
-              position: 'bottom',
-              duration : 3000,
-              type: 'danger'
-            })
-    }
-    requestUpdatePost(this.state.token, post.uuid, onSuccess, onError)
-
+    this.props.updatePost(post)
   }
 
  hideInvestModal= ()=>{
@@ -212,7 +197,7 @@ class Main extends Component{
 
   render(){
     return(
-      <View style={{flex:1}}>
+      <View style={{flex:1 }}>
         {this.state.selected_item_to_invest &&
           <Modal
             transparent={true}
@@ -267,7 +252,7 @@ class Main extends Component{
              size={31}/>
           </View>
         </Header>
-        <View style={{flex:1}}>
+
           <FlatList data={this.props.data}
             keyExtractor={item => item.uuid}
             refreshing = {this.state.refreshing}
@@ -289,7 +274,7 @@ class Main extends Component{
                 openCommentPage = {this.openCommentPage}
               />
             }/>
-        </View>
+
       </View>
     )
   }

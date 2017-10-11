@@ -1,3 +1,4 @@
+
 import React, { Component } from 'react';
 import {connect} from 'react-redux';
 import { StyleSheet, Image, View, Text,
@@ -12,23 +13,25 @@ import {updatePost} from '../requestServer.js';
 import {EnglighNumberToPersian} from '../utility/NumberUtils.js';
 import {getRemainingTimeText, getTimeAgo} from '../utility/TimerUtil.js';
 import Swiper from 'react-native-swiper';
-import PostItem from './postItem.js'
+import PostItem from './PostItem/postItem.js'
 import {requestLocation} from '../utility/locationUtility.js';
 import { updateProfilePost} from '../actions/profilePostActions.js';
 import InvestComponent from './InvestComponent.js';
+import AbstractPostIncludedPage from './AbstractPostIncludedPage.js';
 
 
-class PostDetailPage extends Component{
-  profilePost = this.props.navigation.state.params.profilePost
-  token = this.props.navigation.state.params.token
-  user = this.props.navigation.state.params.user
+class PostDetailPage extends AbstractPostIncludedPage{
+  profilePost = this.props.navigation.state.params.profilePost;
+  user = this.props.navigation.state.params.user;
+
   constructor(props){
     super(props);
     this.state ={
+      ...this.state,
       post : this.profilePost.post,
-      current_location: undefined,
+      // current_location: undefined,
       my_username: undefined,
-      show_invest_modal: false,
+      // show_invest_modal: false,
     }
   }
 
@@ -36,18 +39,15 @@ class PostDetailPage extends Component{
 
   }
 
-  openCommentPage = (post_uuid, post_title) =>{
-    this.props.navigation.navigate('CommentPage', {token: this.token, post_uuid, post_title  })
+
+
+  setSelectedItemToBuy = (item, reposter)=>{
+    this.props.navigation.navigate('BuyItemPage', {post: item, token: this.token, reposter: reposter})
   }
 
   componentDidMount(){
-    let onSuccess = (res) =>{
-      this.setState({current_location: res})
-    }
-    let onFailed = (error) =>{
-      alert(error.message)
-    }
-    requestLocation(navigator, onSuccess, onFailed)
+    super.componentDidMount()
+
     SInfo.getItem('username', {
     sharedPreferencesName: 'mifroosham',
     keychainService: 'mifroosham'}).then(my_username => {
@@ -60,20 +60,21 @@ class PostDetailPage extends Component{
   }
 
   updatePost = (post)=>{
-    this.props.updateProfilePost(post)
+    this.setState({post})
+    this.props.updateProfilePost(post.sender.username, post)
+    this.props.updateProfilePost(this.state.my_username, post)
   }
 
-  hideInvestModal= ()=>{
-    this.setState({show_invest_modal: false, invest_loading:false})
-  }
+  // hideInvestModal= ()=>{
+  //   this.setState({show_invest_modal: false, invest_loading:false})
+  // }
 
   loadingTopCompeleted = ()=>{
     this.setState({invest_loading: false})
+
   }
 
-  showInvestModal = ()=>{
-    this.setState({show_invest_modal: true})
-  }
+
 
   render(){
     return(
@@ -105,11 +106,11 @@ class PostDetailPage extends Component{
         }
         <ScrollView>
           <PostItem
+            {...this.profilePost}
             post = {this.state.post}
             buyable = {this.state.username !== this.state.my_username}
             reposter = {this.profilePost.is_repost && this.user }
             setSelectedItemToBuy = {this.setSelectedItemToBuy}
-            updatedPosts = {this.state.updatedPosts}
             showInvestModal = {this.showInvestModal}
             token = {this.token}
             current_location = {this.state.current_location}
@@ -126,63 +127,6 @@ class PostDetailPage extends Component{
 
 }
 
-
-
-function RenderImage(props){
-
-  const post = props.post;
-  if(!post.image_url_1){
-    return(
-        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
-    )
-  }else if (!post.image_url_2) {
-    return(
-      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
-      </Swiper>
-    )
-  }else if (!post.image_url_3) {
-    return(
-      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_2}} style={styles.postImage}/>
-      </Swiper>
-    )
-  }else if (!post.image_url_4) {
-    return(
-      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_2}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_3}} style={styles.postImage}/>
-      </Swiper>
-    )
-  }else if (!post.image_url_5) {
-    return(
-      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_2}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_3}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_4}} style={styles.postImage}/>
-      </Swiper>
-    )
-  }else {
-    return(
-      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_2}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_3}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_4}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_5}} style={styles.postImage}/>
-      </Swiper>
-    )
-  }
-
-}
 
 const styles = StyleSheet.create({
   postImage:{

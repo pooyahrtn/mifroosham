@@ -26,21 +26,23 @@ class ProfilePage extends Component {
    SInfo.getItem('token', {
    sharedPreferencesName: 'mifroosham',
    keychainService: 'mifroosham'}).then(token => {
+
        if (token != null){
-         if(this.props.navigation.state.hasOwnProperty('params')){
-            username= this.props.navigation.state.params.username
-            this.setState({username, token})
+         SInfo.getItem('username', {
+         sharedPreferencesName: 'mifroosham',
+         keychainService: 'mifroosham'}).then(my_username => {
+           isItMe = true;
+           username = undefined;
+           if(this.props.navigation.state.hasOwnProperty('params')){
+              username= this.props.navigation.state.params.username
+              isItMe = username === my_username
+            }else{
+              username = my_username;
+            }
+            this.setState({username, token, isItMe})
             this.userPostsRequest(token, username)
             this.userDetailRequest(token, username)
-          }else{
-            SInfo.getItem('username', {
-            sharedPreferencesName: 'mifroosham',
-            keychainService: 'mifroosham'}).then(username => {
-                this.setState({username, isItMe: true, token})
-                this.userPostsRequest(token, username)
-                this.userDetailRequest(token, username)
-            });
-         }
+         });
        }
       else{
          this.props.navigation.navigate('Authentication')
@@ -126,10 +128,11 @@ _updateProfilePhoto = (image) =>{
    }
    let onSuccess = (res) =>{
      if (page === 1){
-       this.props.initProfilePost(res.results)
+       this.props.initProfilePost(username, res.results)
      }else{
-       this.props.loadMoreProfilePost(res.results)
+       this.props.loadMoreProfilePost(username, res.results)
      }
+
      this.setState({
        error: res.error || null,
        loading: false,
@@ -170,7 +173,7 @@ _updateProfilePhoto = (image) =>{
 
  render(){
    return(
-     <View style={{flex:1}}>
+     <View style={{flex:1, backgroundColor:'#BDBDBD'}}>
      <Header style={{backgroundColor: '#F5F5F5'}}>
        <StatusBar
           backgroundColor="#e0e0e0"
@@ -284,7 +287,7 @@ _updateProfilePhoto = (image) =>{
 
 
           <FlatList
-           data={this.props.data}
+           data={this.props.data[this.state.username]}
            contentContainerStyle={styles.list}
            numColumns = {3}
            keyExtractor={item => item.uuid}
@@ -295,8 +298,10 @@ _updateProfilePhoto = (image) =>{
            ListFooterComponent={this.renderFooter}
            renderItem={({item}) =>
               <TouchableWithoutFeedback onPress={()=>this.openPostDetail(item)}>
-                <Image style={{width:getPostWidth(), height:getPostWidth() , borderRadius:2 , margin: 2, borderColor:'#E0E0E0', borderWidth:1}}
-                source={{uri: item.post.image_url_0}} />
+
+                  <Image style={{width:getPostWidth(), height:getPostWidth() , borderRadius:2 , margin: 2 }}
+                  source={{uri: item.post.image_url_0}} />
+
               </TouchableWithoutFeedback>
 
            }/>
@@ -420,6 +425,6 @@ function mapStateToProps(state){
  };
 }
 function matchDispatchToProps(dispatch){
- return bindActionCreators({initProfilePost, loadMoreProfilePost, updateProfilePost}, dispatch)
+ return bindActionCreators({initProfilePost, loadMoreProfilePost}, dispatch)
 }
 export default connect(mapStateToProps, matchDispatchToProps)(ProfilePage);

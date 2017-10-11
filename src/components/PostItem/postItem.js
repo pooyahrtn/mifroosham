@@ -2,78 +2,39 @@ import React, { PureComponent } from 'react';
 import {StyleSheet,Text, View, Image, TouchableNativeFeedback,TouchableWithoutFeedback, Platform, Dimensions, Alert} from 'react-native';
 import { Card, } from 'native-base';
 import { Icon, Button, Rating, Avatar } from 'react-native-elements';
-import {EnglighNumberToPersian, EnglishNumberToPersianPrice} from '../utility/NumberUtils.js';
+import {EnglighNumberToPersian, EnglishNumberToPersianPrice} from '../../utility/NumberUtils.js';
 import ParsedText from 'react-native-parsed-text';
 import {phonecall} from 'react-native-communications'
-import {getRemainingTimeText, getTimeAgo} from '../utility/TimerUtil.js';
-import {getDistanceInPersian} from '../utility/DistanceUtil.js'
-import {like_post_url, repost_post_url} from '../serverAddress.js';
+import {getTimeAgo} from '../../utility/TimerUtil.js';
+import {getDistanceInPersian} from '../../utility/DistanceUtil.js'
+import {like_post_url, repost_post_url} from '../../serverAddress.js';
 import Swiper from 'react-native-swiper';
+import AbstractPostItem from './AbstractPostItem.js';
 
 
 
-function getCurrentPrice(start_date,end_date ,real_price, start_price){
-  let start_time = new Date(start_date).getTime()/1000
-  let end_time = new Date(end_date).getTime() / 1000
-  let now = new Date().getTime()/ 1000;
-  if (now >= end_time) {
-    return real_price;
-  }
-  let duration = end_time - start_time;
-  return Math.floor(start_price + ((now - start_time)/duration) * (real_price - start_price))
-}
+
+export default class CardHeaderFooterExample extends AbstractPostItem {
 
 
-export default class CardHeaderFooterExample extends PureComponent {
 
   constructor(props) {
     super(props);
     this.state = {
+      ...this.state,
       you_liked : this.props.you_liked,
       you_reposted : this.props.you_reposted,
       n_reposts : this.props.post.n_reposters,
       n_likes : this.props.post.n_likes,
-      intervalId : undefined,
     }
-    if (this.props.post.post_type === 2) {
-      this.state = {...this.state, auction_remaining_time: 0}
-    }else if (this.props.post.post_type === 1) {
-      this.state = {...this.state, discound_current_price: 0};
-    }
-
 }
 
-componentDidMount(){
-  if (this.props.post.post_type === 2) {
-
-    intervalId = setInterval(() => {
-      this.setState((prevState, props) => {
-      return {auction_remaining_time: getRemainingTimeText(this.props.post.auction.end_time)};
-      });
-    }, 1000);
-    this.setState( {intervalId: intervalId});
+  componentDidMount(){
+    super.componentDidMount()
   }
-  else if (this.props.post.post_type === 1) {
-
-      intervalId = setInterval(() => {
-      this.setState((prevState, props) => {
-      return {discound_current_price: getCurrentPrice(this.props.post.discount.start_time, this.props.post.discount.end_time,
-        this.props.post.discount.real_price, this.props.post.discount.start_price)};
-      });
-    }, 1000);
-    this.setState({intervalId: intervalId});
-  }
-  else {
-    this.setState({intervalId : undefined})
-  }
-}
-
   componentWillUnmount(){
-    if (this.state.intervalId) {
-      clearInterval(this.state.intervalId);
-    }
+    super.componentWillUnmount()
   }
-
 
   handlePhonePress(phoneNumber){
     phonecall(phoneNumber, true);
@@ -162,7 +123,7 @@ componentDidMount(){
       repost_color = '#000000'
     }
     return (
-      <View style={{backgroundColor:'#fdfdfd', borderRadius:5, margin:4, marginBottom:7}}>
+      <View style={{width: this.width, borderRadius: 3, marginTop: 5, backgroundColor:'white'}}>
         {this.props.reposter &&
 
           <View style={{flexDirection: 'row', alignItems: 'center', justifyContent:'flex-end', padding:2 }}>
@@ -175,28 +136,24 @@ componentDidMount(){
         }
         <View style={{flexDirection: 'row', padding: 3,flex:1 , alignItems:'center' }}>
           <Icon name='more-vert' color='#9E9E9E'/>
-          <View style={{flex:1}}>
+          <View>
             <Text style= {styles.timeText}> {EnglighNumberToPersian(getTimeAgo(new Date(this.props.post.sent_time).getTime()/1000))}</Text>
             {this.props.post.location && this.props.current_location &&
                 <Text style= {styles.timeText}> {getDistanceInPersian(this.props.current_location, this.props.post.location)}</Text>
             }
           </View>
 
-          {this.props.reposter &&
-            <Rating
-            imageSize={12}
-            readonly
-            startingValue={this.props.post.sender.profile.score}
-            style = {{margin: 3}}
-            />}
           <TouchableWithoutFeedback onPress={()=> {this.props.openProfilePage(this.props.post.sender.username)}} >
-            <View style={{flexDirection:'row', alignItems: 'center'}}>
-              <Text style= {styles.nameText}>{this.props.post.sender.profile.full_name}</Text>
+            <View style={{flexDirection:'row', alignItems: 'center', flex:1, justifyContent:'flex-end'}}>
+              <View style={{alignItems:'flex-end'}}>
+                <Text style= {styles.nameText}>{this.props.post.sender.profile.full_name}</Text>
+                <Text style={styles.timeText}>@{this.props.post.sender.username}</Text>
+              </View>
               <Avatar rounded small  source={{uri: this.props.post.sender.profile.avatar_url}}/>
             </View>
           </TouchableWithoutFeedback>
         </View>
-        <RenderImage post={this.props.post}/>
+        <RenderImage post={this.props.post} width={this.width}/>
 
         <View style={styles.cardItemRow}>
           {this.props.post.ads_included &&
@@ -306,53 +263,58 @@ componentDidMount(){
 function RenderImage(props){
 
   const post = props.post;
+  const width = props.width;
+  postImage = {
+    width,
+    height: width
+  }
   if(!post.image_url_1){
     return(
-        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
+        <Image source={{uri: post.image_url_0}} style={postImage}/>
     )
   }else if (!post.image_url_2) {
     return(
-      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
+      <Swiper width={width} height={width} loadMinimal={true}>
+        <Image source={{uri: post.image_url_0}} style={postImage}/>
+        <Image source={{uri: post.image_url_1}} style={postImage}/>
       </Swiper>
     )
   }else if (!post.image_url_3) {
     return(
-      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_2}} style={styles.postImage}/>
+      <Swiper width={width} height={width} loadMinimal={true}>
+        <Image source={{uri: post.image_url_0}} style={postImage}/>
+        <Image source={{uri: post.image_url_1}} style={postImage}/>
+        <Image source={{uri: post.image_url_2}} style={postImage}/>
       </Swiper>
     )
   }else if (!post.image_url_4) {
     return(
-      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_2}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_3}} style={styles.postImage}/>
+      <Swiper width={width} height={width} loadMinimal={true}>
+        <Image source={{uri: post.image_url_0}} style={postImage}/>
+        <Image source={{uri: post.image_url_1}} style={postImage}/>
+        <Image source={{uri: post.image_url_2}} style={postImage}/>
+        <Image source={{uri: post.image_url_3}} style={postImage}/>
       </Swiper>
     )
   }else if (!post.image_url_5) {
     return(
-      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_2}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_3}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_4}} style={styles.postImage}/>
+      <Swiper width={width} height={width} loadMinimal={true}>
+        <Image source={{uri: post.image_url_0}} style={postImage}/>
+        <Image source={{uri: post.image_url_1}} style={postImage}/>
+        <Image source={{uri: post.image_url_2}} style={postImage}/>
+        <Image source={{uri: post.image_url_3}} style={postImage}/>
+        <Image source={{uri: post.image_url_4}} style={postImage}/>
       </Swiper>
     )
   }else {
     return(
-      <Swiper width={Dimensions.get('window').width} height={Dimensions.get('window').width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_1}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_2}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_3}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_4}} style={styles.postImage}/>
-        <Image source={{uri: post.image_url_5}} style={styles.postImage}/>
+      <Swiper width={width} height={width} loadMinimal={true}>
+        <Image source={{uri: post.image_url_0}} style={postImage}/>
+        <Image source={{uri: post.image_url_1}} style={postImage}/>
+        <Image source={{uri: post.image_url_2}} style={postImage}/>
+        <Image source={{uri: post.image_url_3}} style={postImage}/>
+        <Image source={{uri: post.image_url_4}} style={postImage}/>
+        <Image source={{uri: post.image_url_5}} style={postImage}/>
       </Swiper>
     )
   }
@@ -361,10 +323,8 @@ function RenderImage(props){
 
 
 const styles = StyleSheet.create({
-  postImage:{
-    width: null ,
-    height: Dimensions.get('window').width
-  },
+
+
   nameText :{
     paddingRight: 5,
     color: '#444444',
@@ -472,11 +432,11 @@ const styles = StyleSheet.create({
     },
     timeText:{
       textAlign:'left',
-      padding:5,
-      color:'#9E9E9E',
+      padding:2,
+      marginRight:3,
+      color:'gray',
       fontWeight: '100',
-      fontSize:11,
-      flex:1,
+      fontSize:12,
     },
     likeText:{
       fontSize: 11,

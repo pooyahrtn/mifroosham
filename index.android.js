@@ -14,6 +14,7 @@
  import {persistStore, autoRehydrate} from 'redux-persist'
 
  import {Provider} from 'react-redux';
+ import logger from 'redux-logger'
  const store = createStore(allReducers,undefined, compose( applyMiddleware(thunk)), autoRehydrate);
  persistStore(store,{storage:AsyncStorage})
 

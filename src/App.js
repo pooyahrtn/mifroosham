@@ -24,6 +24,9 @@ import {addFocusedNotification} from './actions/notificationActions.js';
 import CommentPage from './components/commentsPage.js';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
+import UsernameSearch from './components/SearchTab/UsernameSearch.js';
+import PostTitleSearch from './components/SearchTab/PostTitleSearch.js';
+
 
 
 const InboxTabPage = TabNavigator({
@@ -58,23 +61,60 @@ const InboxTabPage = TabNavigator({
 
 });
 
+const SearchTab = TabNavigator({
+  UsernameSearch:{
+    screen: UsernameSearch,
+  },
+  PostTitleSearch:{
+    screen:PostTitleSearch
+  }
+
+}, {
+
+
+  tabBarPosition: 'top',
+
+  tabBarOptions: {
+     showIcon :true,
+     shifting : true,
+     activeTintColor : 'black',
+     inactiveTintColor: '#707070',
+     labelStyle: {
+      fontSize: 16,
+      fontWeight:'bold'
+    },
+     style: {
+      backgroundColor: '#F5F5F5',
+    },
+    indicatorStyle : {
+      backgroundColor:'#707070'
+    }
+   }
+
+});
+
 const MyApp = TabNavigator({
   Main: {
     screen: Main,
   },
-
+  SearchTab:{
+    screen: SearchTab,
+  },
   HistoryPage:{
     screen: HistoryPage,
   },
   ProfilePage:{
     screen: ProfilePage,
-  }
+  },
+
 
 }, {
 
   tabBarComponent:NavigationComponent,
   tabBarPosition: 'bottom',
-
+  swipeEnabled : false,
+  animationEnabled:false,
+  lazy: true,
   tabBarOptions: {
    bottomNavigationOptions: {
      rippleColor: '#BDBDBD',
@@ -85,7 +125,7 @@ const MyApp = TabNavigator({
       borderColor: '#EEEEEE',
       elevation: 1,
     },
-     shifting : true,
+     shifting : false,
      tabs: {
        Main: {
          icon : <Icon size={24} color="#BDBDBD" name="home" />,
@@ -98,6 +138,10 @@ const MyApp = TabNavigator({
        ProfilePage: {
          icon : <Icon size={24} color="#BDBDBD" name="account-box" />,
          activeIcon : <Icon size={24} color="#455A64" name="account-box" />
+       },
+       SearchTab: {
+         icon : <Icon size={24} color="#BDBDBD" name="search" />,
+         activeIcon : <Icon size={24} color="#455A64" name="search" />
        }
      }
    }

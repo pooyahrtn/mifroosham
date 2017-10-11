@@ -22,6 +22,7 @@ import {bindActionCreators} from 'redux';
         loadMore = {this.props.loadBoughtMore}
         updateTransaction = {this.props.updateBoughtTransaction}
         deleteTransaction = {this.deleteBoughtTransaction}
+        navigation = {this.props.navigation}
         transactions_url = {bought_transactions_url}
         lable = 'خرید ها'
         token = {this.token}

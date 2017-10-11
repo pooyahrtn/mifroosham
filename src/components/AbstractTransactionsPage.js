@@ -7,9 +7,10 @@ import {delete_transaction_url, write_review_url, confirm_deliver_url, transacti
 import DeliverItem from './deliverItem.js'
 import StarRating from 'react-native-star-rating';
 import {phonecall} from 'react-native-communications';
-import {readNotifications} from '../requestServer.js';
+import {readNotifications as requestReadNotifications} from '../requestServer.js';
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
+import {readNofification} from '../actions/notificationActions.js';
 
 
 class AbstractTransactionPage extends Component {
@@ -18,7 +19,7 @@ class AbstractTransactionPage extends Component {
 
   componentDidMount(){
     this.makeRemoteRequest(this.props.token)
-    readNotifications(this.props.token, (res)=>{this.props.readNotifications()}, (error) => {console.log(error)})
+    requestReadNotifications(this.props.token, (res)=>{this.props.readNotification()}, (error) => {console.log(error)})
     this.loadHelps()
   }
   constructor(props){
@@ -657,7 +658,7 @@ function mapStateToProps(state){
 }
 
 function matchDispatchToProps(dispatch){
-  return bindActionCreators({readNotifications}, dispatch)
+  return bindActionCreators({readNofification}, dispatch)
 }
 
 export default connect(mapStateToProps, matchDispatchToProps)(AbstractTransactionPage);
