@@ -1,7 +1,7 @@
 import {bought_transactions_url, sold_transactions_url, transaction_notifications_url,
   read_transaction_notifications, post_comments_url, send_comment_url, posts_url, report_comment_url,
   read_feeds_url, base_url, user_posts, update_profile_photo_url,follow_user_url, user_reviews_url, username_search_url,
-post_title_search } from './serverAddress.js'
+post_title_search, user_followers_url, user_followings_url } from './serverAddress.js'
 
 function basicGet(url, token, onSuccess, onFailed ){
   fetch(url,
@@ -11,6 +11,21 @@ function basicGet(url, token, onSuccess, onFailed ){
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'Authorization': 'Token ' + token
+      }
+    }
+  )
+    .then(res => res.json())
+    .then(onSuccess)
+    .catch(onFailed);
+}
+
+function basicGetNoToken(url, onSuccess, onFailed ){
+  fetch(url,
+    {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
       }
     }
   )
@@ -222,4 +237,19 @@ export function searchPostTitle (token, next_page, username, onSuccess, onFailed
     url = post_title_search + username+'/'
   }
   return basicGet(url, token, onSuccess, onFailed)
+}
+
+export function requestUserFollowers(url, username, onSuccess, onFailed){
+  if(url === -1){
+    url = user_followers_url+username+'/';
+  }
+  return basicGetNoToken(url, onSuccess, onFailed)
+}
+
+
+export function requestUserFollowings(url, username, onSuccess, onFailed){
+  if(url === -1){
+    url = user_followings_url+username+'/';
+  }
+  return basicGetNoToken(url, onSuccess, onFailed)
 }

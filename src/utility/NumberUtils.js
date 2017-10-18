@@ -43,6 +43,9 @@ export function countText(count){
     scale = 'ک'
   }
   res = '';
+  if(count === 0){
+    return id[0]
+  }
   for (var i = 10; leftNumber > 0 ; ) {
     res = (id[leftNumber % 10]) + res ;
     leftNumber = Math.floor(leftNumber / 10)

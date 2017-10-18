@@ -5,21 +5,27 @@ import {Thumbnail} from 'native-base'
 import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import {Text, View, TouchableWithoutFeedback} from 'react-native';
+import {initUsernameSearch, loadMoreUsernameSearch} from '../../actions/UsernameSearchActions.js';
 
 
- class Page extends Component{
+class UsernameSearch extends Component{
   static navigationOptions = {
    tabBarLabel: 'اشخاص',
 
  };
 
- openProfilePage = (username) =>{
-  this.props.navigation.navigate('OtherProfilePage', {username})
- }
+  openProfilePage = (username) =>{
+    this.props.navigation.navigate('OtherProfilePage', {username})
+  }
+
+
 
   render(){
     return (
       <AbstractSearchPage
+        data = {this.props.data}
+        initData = {this.props.initUsernameSearch}
+        loadMore = {this.props.loadMoreUsernameSearch}
         search = {searchUsername}
         navigation = {this.props.navigation}
         renderItem = {_renderItem}
@@ -41,11 +47,11 @@ function _renderItem(props){
         <View style={{flex:1, padding: 5}}>
           <View style={{flexDirection:'row'}}>
             <Text style={{flex:1}}> @{props.username}</Text>
-            <Text style={{fontWeight:'bold'}}>{props.profile.full_name}</Text>
+            <Text style={{fontWeight:'bold'}}>{props.full_name}</Text>
           </View>
-          <Text>{props.profile.bio}</Text>
+          <Text>{props.bio}</Text>
         </View>
-        <Thumbnail small source={{uri: props.profile.avatar_url}}/>
+        <Thumbnail small source={{uri: props.avatar_url}}/>
       </View>
     </TouchableWithoutFeedback>
   )
@@ -53,12 +59,12 @@ function _renderItem(props){
 
 function mapStateToProps(state){
   return{
-
+    data : state.UsernameSearchReducer
   };
 }
 
 function matchDispatchToProps(dispatch){
-  return bindActionCreators({}, dispatch)
+  return bindActionCreators({initUsernameSearch, loadMoreUsernameSearch}, dispatch)
 }
 
-export default connect(mapStateToProps, matchDispatchToProps)(Page);
+export default connect(mapStateToProps, matchDispatchToProps)(UsernameSearch);

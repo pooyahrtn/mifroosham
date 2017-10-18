@@ -16,6 +16,7 @@ import {initBoughtTransactions, initSoldTransactions, getTransactionNotification
 import {initBoughtData, initSoldData} from '../actions/transactionsActions.js';
 import SInfo from 'react-native-sensitive-info';
 import InvestComponent from './InvestComponent.js';
+
 class Main extends Component{
 
   static navigationOptions = {
@@ -265,8 +266,8 @@ class Main extends Component{
             renderItem={({item}) =>
               <PostItem
                 {...item}
+                updatePost = {this.props.updatePost}
                 setSelectedItemToBuy = {this.setSelectedItemToBuy}
-                updatedPosts = {this.state.updatedPosts}
                 showInvestModal = {this.showInvestModal}
                 token = {this.state.token}
                 current_location = {this.state.current_location}

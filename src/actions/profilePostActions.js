@@ -17,9 +17,9 @@ export const loadMoreProfilePost = (username, data)=>{
   }
 }
 
-export const updateProfilePost = (username, post)=>{
+export const updateProfilePost = (username, postContainer)=>{
   return {
     type : UPDATE_PROFILE_POST,
-    payload: {post, username}
+    payload: {postContainer, username}
   }
 }

@@ -26,6 +26,7 @@ import {connect} from 'react-redux';
 import {bindActionCreators} from 'redux';
 import UsernameSearch from './components/SearchTab/UsernameSearch.js';
 import PostTitleSearch from './components/SearchTab/PostTitleSearch.js';
+import FollowUsers from './components/FollowUsers.js';
 
 
 
@@ -184,6 +185,9 @@ const routeConfigs = {
   },
   PostDetailPage:{
     screen: PostDetailPage
+  },
+  FollowUsers:{
+    screen: FollowUsers
   }
 
 }

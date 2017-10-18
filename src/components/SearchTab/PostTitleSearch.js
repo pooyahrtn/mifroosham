@@ -7,6 +7,7 @@ import {bindActionCreators} from 'redux';
 import {Text, Dimensions, TouchableWithoutFeedback} from 'react-native';
 import {requestLocation} from '../../utility/locationUtility.js';
 import SInfo from 'react-native-sensitive-info';
+import {initPostSearch, loadMorePostSearch} from '../../actions/PostSearchActions.js';
 
  class Page extends Component{
   static navigationOptions = {
@@ -40,6 +41,9 @@ import SInfo from 'react-native-sensitive-info';
   render(){
     return (
       <AbstractSearchPage
+        data = {this.props.data}
+        initData= {this.props.initPostSearch}
+        loadMore = {this.props.loadMorePostSearch}
         search = {searchPostTitle}
         navigation = {this.props.navigation}
         renderItem = {_renderItem}
@@ -51,6 +55,7 @@ import SInfo from 'react-native-sensitive-info';
     )
   }
 
+  
 }
 function _renderItem(props){
   return(
@@ -75,14 +80,17 @@ function getPostWidth(){
 
 }
 
+
 function mapStateToProps(state){
   return{
-
+    data : state.PostSearchReducer
   };
 }
 
 function matchDispatchToProps(dispatch){
-  return bindActionCreators({}, dispatch)
+  return bindActionCreators({initPostSearch, loadMorePostSearch}, dispatch)
 }
 
 export default connect(mapStateToProps, matchDispatchToProps)(Page);
+
+

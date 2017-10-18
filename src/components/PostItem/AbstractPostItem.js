@@ -23,16 +23,18 @@ function getCurrentPrice(start_date,end_date ,real_price, start_price){
 export default class AbstractPostItem extends PureComponent {
 
   width = Dimensions.get('window').width;
+  intervalId = undefined;
 
   constructor(props) {
     super(props);
     this.state = {
-      intervalId : undefined,
+      
     }
     if (this.props.post.post_type === 2) {
-      this.state = {...this.state, auction_remaining_time: 0}
+      this.state = {...this.state, auction_remaining_time: getRemainingTimeText(this.props.post.auction.end_time)}
     }else if (this.props.post.post_type === 1) {
-      this.state = {...this.state, discound_current_price: 0};
+      this.state = {...this.state, discound_current_price: getCurrentPrice(this.props.post.discount.start_time, this.props.post.discount.end_time,
+        this.props.post.discount.real_price, this.props.post.discount.start_price)};
     }
     if(this.props.width){
       this.width = this.props.width;
@@ -47,7 +49,8 @@ export default class AbstractPostItem extends PureComponent {
         return {auction_remaining_time: getRemainingTimeText(this.props.post.auction.end_time)};
         });
       }, 1000);
-      this.setState( {intervalId: intervalId});
+      // this.setState( {intervalId: intervalId});
+      this.intervalId = intervalId
     }
     else if (this.props.post.post_type === 1) {
 
@@ -56,17 +59,22 @@ export default class AbstractPostItem extends PureComponent {
         return {discound_current_price: getCurrentPrice(this.props.post.discount.start_time, this.props.post.discount.end_time,
           this.props.post.discount.real_price, this.props.post.discount.start_price)};
         });
-      }, 1000);
-      this.setState({intervalId: intervalId});
+      }, 5000);
+      // this.setState({intervalId: intervalId});
+      this.intervalId = intervalId;
     }
     else {
-      this.setState({intervalId : undefined})
+      // this.setState({intervalId : undefined})
     }
   }
 
+  // shouldComponentUpdate(nextProps, nextState){
+  //   if(nextState.intervalId != )
+  // }
+
     componentWillUnmount(){
-      if (this.state.intervalId) {
-        clearInterval(this.state.intervalId);
+      if (this.intervalId) {
+        clearInterval(this.intervalId);
       }
     }
 }

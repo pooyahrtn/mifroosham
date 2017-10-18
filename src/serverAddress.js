@@ -37,3 +37,5 @@ export const follow_user_url = base_url + 'profiles/follow/';
 export const user_reviews_url = base_url +'profiles/user_reviews/';
 export const username_search_url = base_search + 'username/';
 export const post_title_search = base_search + 'post_title/';
+export const user_followers_url = base_url + 'profiles/user_followers/';
+export const user_followings_url = base_url + 'profiles/user_followings/';

@@ -24,8 +24,8 @@ class CommentItem extends PureComponent{
               startingValue={this.props.rate}
               style = {{margin: 3}}
               />
-            <Text style={{flex:1, padding: 3, fontWeight:'bold', textAlign:'right'}}>{this.props.reviewer.profile.full_name}</Text>
-            <Avatar rounded source={{uri:this.props.reviewer.profile.avatar_url}}/>
+            <Text style={{flex:1, padding: 3, fontWeight:'bold', textAlign:'right'}}>{this.props.reviewer.full_name}</Text>
+            <Avatar rounded source={{uri:this.props.reviewer.avatar_url}}/>
           </View>
           {this.props.comment &&
             <Text>{this.props.comment}</Text>

@@ -18,6 +18,7 @@ import {requestLocation} from '../utility/locationUtility.js';
 import { updateProfilePost} from '../actions/profilePostActions.js';
 import InvestComponent from './InvestComponent.js';
 import AbstractPostIncludedPage from './AbstractPostIncludedPage.js';
+import {updatePostSearch} from '../actions/PostSearchActions.js';
 
 
 class PostDetailPage extends AbstractPostIncludedPage{
@@ -28,8 +29,7 @@ class PostDetailPage extends AbstractPostIncludedPage{
     super(props);
     this.state ={
       ...this.state,
-      post : this.profilePost.post,
-      // current_location: undefined,
+      post: this.profilePost.post,
       my_username: undefined,
       // show_invest_modal: false,
     }
@@ -59,21 +59,18 @@ class PostDetailPage extends AbstractPostIncludedPage{
       });
   }
 
-  updatePost = (post)=>{
-    this.setState({post})
-    this.props.updateProfilePost(post.sender.username, post)
-    this.props.updateProfilePost(this.state.my_username, post)
+  updatePost = (postContainer)=>{
+    this.setState({post: postContainer.post})
+    this.props.updateProfilePost(postContainer.post.sender.username, postContainer)
+    this.props.updateProfilePost(this.state.my_username, postContainer)
+    this.props.updatePostSearch(postContainer)
   }
 
-  // hideInvestModal= ()=>{
-  //   this.setState({show_invest_modal: false, invest_loading:false})
-  // }
 
   loadingTopCompeleted = ()=>{
     this.setState({invest_loading: false})
 
   }
-
 
 
   render(){
@@ -85,7 +82,7 @@ class PostDetailPage extends AbstractPostIncludedPage{
              barStyle="dark-content"
            />
           <View style= {{flexDirection:'column',alignItems: 'center',justifyContent: 'center' ,flex:1}}>
-            <Title style={{ color: 'black', fontWeight:'bold'}}>{this.state.post.title}</Title>
+            <Title style={{ color: 'black', fontWeight:'bold'}}>{this.profilePost.post.title}</Title>
           </View>
         </Header>
         {this.profilePost.post.ads_included &&
@@ -97,7 +94,11 @@ class PostDetailPage extends AbstractPostIncludedPage{
             >
             <InvestComponent
               selected_item_to_invest = {this.profilePost.post}
-              updatePost = {this.updatePost}
+              updatePost = {(post) =>{
+                profilePost = this.profilePost;
+                profilePost.post = post;
+                this.updatePost(profilePost);
+                }}
               hideInvestModal = {this.hideInvestModal}
               token = {this.token}
               loadingTopCompeleted = {this.loadingTopCompeleted}
@@ -107,8 +108,9 @@ class PostDetailPage extends AbstractPostIncludedPage{
         <ScrollView>
           <PostItem
             {...this.profilePost}
+            updatePost = {this.updatePost}
             post = {this.state.post}
-            buyable = {this.state.username !== this.state.my_username}
+            buyable = {this.profilePost.post.sender.username !== this.state.my_username}
             reposter = {this.profilePost.is_repost && this.user }
             setSelectedItemToBuy = {this.setSelectedItemToBuy}
             showInvestModal = {this.showInvestModal}
@@ -143,7 +145,7 @@ function mapStateToProps(state){
 }
 
 function matchDispatchToProps(dispatch){
-  return bindActionCreators({updateProfilePost}, dispatch)
+  return bindActionCreators({updateProfilePost, updatePostSearch}, dispatch)
 }
 
 export default connect(mapStateToProps, matchDispatchToProps)(PostDetailPage);

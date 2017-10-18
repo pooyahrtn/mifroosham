@@ -47,7 +47,7 @@ export default class CardHeaderFooterExample extends AbstractPostItem {
 
             <View style={{flexDirection:'row', alignItems: 'center', flex:1, justifyContent:'flex-end'}}>
 
-              <Avatar rounded small  source={{uri: this.props.post.sender.profile.avatar_url}}/>
+              <Avatar rounded small  source={{uri: this.props.post.sender.avatar_url}}/>
             </View>
 
           </View>
@@ -91,7 +91,7 @@ export default class CardHeaderFooterExample extends AbstractPostItem {
             {this.props.post.post_type === 2 ?
               <View style={styles.auctionTimerContainer}>
                   <Text style={styles.auctionTimerText} >{EnglighNumberToPersian(this.state.auction_remaining_time.text)}</Text>
-                  <Text style={{ fontSize:11}} > زمان باقی مانده </Text>
+        
                   <Icon type='evilicon'  name='clock' color='#009688' size={28}/>
               </View>
             :
@@ -115,7 +115,7 @@ export default class CardHeaderFooterExample extends AbstractPostItem {
 
 
               <View style={(this.state.auction_remaining_time.enabled && this.props.buyable)?styles.auctionBuyButton:styles.auctionBuyButtonDisabled}>
-                <Text style={styles.priceText} >بالاترین پیشنهاد {this.props.post.auction.highest_suggest ?
+                <Text style={styles.priceText} >{this.props.post.auction.highest_suggest ?
                    EnglishNumberToPersianPrice(this.props.post.auction.highest_suggest)
                     :
                     EnglishNumberToPersianPrice(this.props.post.auction.base_money)
@@ -141,56 +141,11 @@ function RenderImage(props){
     width,
     height: width
   }
-  if(!post.image_url_1){
-    return(
-        <Image source={{uri: post.image_url_0}} style={postImage}/>
-    )
-  }else if (!post.image_url_2) {
-    return(
-      <Swiper width={width} height={width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={postImage}/>
-        <Image source={{uri: post.image_url_1}} style={postImage}/>
-      </Swiper>
-    )
-  }else if (!post.image_url_3) {
-    return(
-      <Swiper width={width} height={width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={postImage}/>
-        <Image source={{uri: post.image_url_1}} style={postImage}/>
-        <Image source={{uri: post.image_url_2}} style={postImage}/>
-      </Swiper>
-    )
-  }else if (!post.image_url_4) {
-    return(
-      <Swiper width={width} height={width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={postImage}/>
-        <Image source={{uri: post.image_url_1}} style={postImage}/>
-        <Image source={{uri: post.image_url_2}} style={postImage}/>
-        <Image source={{uri: post.image_url_3}} style={postImage}/>
-      </Swiper>
-    )
-  }else if (!post.image_url_5) {
-    return(
-      <Swiper width={width} height={width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={postImage}/>
-        <Image source={{uri: post.image_url_1}} style={postImage}/>
-        <Image source={{uri: post.image_url_2}} style={postImage}/>
-        <Image source={{uri: post.image_url_3}} style={postImage}/>
-        <Image source={{uri: post.image_url_4}} style={postImage}/>
-      </Swiper>
-    )
-  }else {
-    return(
-      <Swiper width={width} height={width} loadMinimal={true}>
-        <Image source={{uri: post.image_url_0}} style={postImage}/>
-        <Image source={{uri: post.image_url_1}} style={postImage}/>
-        <Image source={{uri: post.image_url_2}} style={postImage}/>
-        <Image source={{uri: post.image_url_3}} style={postImage}/>
-        <Image source={{uri: post.image_url_4}} style={postImage}/>
-        <Image source={{uri: post.image_url_5}} style={postImage}/>
-      </Swiper>
-    )
-  }
+  
+  return(
+      <Image source={{uri: post.image_url_0}} style={postImage}/>
+  )
+
 
 }
 

@@ -18,8 +18,8 @@ class CommentItem extends PureComponent{
       <View style={{flexDirection:'row', alignItems:'center'}}>
         <Icon name='more-vert' color='#9E9E9E' onPress={()=>{this.props.selectComment(this.props)}}/>
         <Text style={{fontWeight:'100', fontSize: 11}}>{getTimeAgo(new Date(this.props.time).getTime()/1000)}</Text>
-        <Text style={{flex:1, margin: 5, fontWeight:'bold', textAlign:'right'}}>{this.props.user.profile.full_name}</Text>
-        <Avatar rounded source={{uri:this.props.user.profile.avatar_url}}/>
+        <Text style={{flex:1, margin: 5, fontWeight:'bold', textAlign:'right'}}>{this.props.user.full_name}</Text>
+        <Avatar rounded source={{uri:this.props.user.avatar_url}}/>
       </View>
       <Text>{this.props.text}</Text>
 

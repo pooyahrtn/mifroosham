@@ -16,14 +16,14 @@ export default function feedsReducer(state={}, action){
       return state;
     }
     case UPDATE_PROFILE_POST:{
-      const {username , post} = action.payload
+      const {username , postContainer} = action.payload
       data = state[username]
       if(!data){
         return state
       }
       for (var i = 0; i < data.length; i++) {
-        if(data[i].post.uuid === post.uuid){
-          data[i].post = post
+        if(data[i].post.uuid === postContainer.post.uuid){
+          data[i] = postContainer
           break
         }
       }

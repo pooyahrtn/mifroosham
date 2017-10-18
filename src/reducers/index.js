@@ -7,6 +7,8 @@ import boughtTransactionsReducer from './boughtTransactionsReducer';
 import notificationReducer from './notificationReducer.js';
 import unreadNotificationsReducer from './unreadNotificationsReducer.js';
 import profilePostReducer from './profilePostReducer.js';
+import PostSearchReducer from './PostSearchReducer.js';
+import UsernameSearchReducer from './UsernameSearchReducer.js';
 
 const allReducers= combineReducers({
 
@@ -17,6 +19,8 @@ const allReducers= combineReducers({
   notificationReducer,
   unreadNotificationsReducer,
   profilePostReducer,
+  PostSearchReducer,
+  UsernameSearchReducer
 });
 
 

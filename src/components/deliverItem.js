@@ -75,19 +75,19 @@ export default class DeliverItem extends PureComponent{
 
 
               {this.props.type === 'BO'?
-                (<Text style={{padding: 4, flex:1, textAlign:'right'}}>{this.props.post.sender.profile.full_name}</Text>)
+                (<Text style={{padding: 4, flex:1, textAlign:'right'}}>{this.props.post.sender.full_name}</Text>)
               :
                 (
-                  <Text style={{padding: 4, flex:1, textAlign:'right'}}>{this.props.buyer.profile.full_name}</Text>
+                  <Text style={{padding: 4, flex:1, textAlign:'right'}}>{this.props.buyer.full_name}</Text>
                 )
               }
               {this.props.type === 'BO'?
                 (
-                  <Thumbnail small source={{uri: this.props.post.sender.profile.avatar_url}}/>
+                  <Thumbnail small source={{uri: this.props.post.sender.avatar_url}}/>
                 )
                 :
                 (
-                  <Thumbnail small source={{uri: this.props.buyer.profile.avatar_url}}/>
+                  <Thumbnail small source={{uri: this.props.buyer.avatar_url}}/>
                 )
               }
 

@@ -10,7 +10,7 @@ import AbstractPostIncludedPage from '../AbstractPostIncludedPage.js';
 import InvestComponent from '../InvestComponent.js';
 
 
-class AbstractSearchPage extends AbstractPostIncludedPage{
+export default class AbstractSearchPage extends AbstractPostIncludedPage{
   constructor(props){
     super(props);
     this.state = {
@@ -18,12 +18,12 @@ class AbstractSearchPage extends AbstractPostIncludedPage{
       loading: false,
       error : null,
       refreshing : false,
-      data: [],
       height: 60,
       next_page : -1,
       search_query : undefined,
       no_results: false,
      }
+     
   }
 
 
@@ -32,7 +32,8 @@ class AbstractSearchPage extends AbstractPostIncludedPage{
   }
 
 
-  makeRemoteRequest = () => {
+
+  makeRemoteRequest = (init) => {
     if(!this.state.search_query){
       return;
     }
@@ -41,8 +42,12 @@ class AbstractSearchPage extends AbstractPostIncludedPage{
 
     let onSuccess = (res)=>{
       no_results = res.results.length === 0;
+      if(init){
+        this.props.initData(res.results)
+      }else{
+        this.props.loadMore(res.results)
+      }
       this.setState({
-        data : [...this.state.data, ...res.results],
         loading: false,
         refreshing: false,
         next_page : res.next,
@@ -67,27 +72,18 @@ class AbstractSearchPage extends AbstractPostIncludedPage{
          refreshing: true
        },
        () => {
-        this.makeRemoteRequest()
+        this.makeRemoteRequest(true)
        }
      );
    };
 
    handleLoadMore = () => {
-     this.makeRemoteRequest()
+     this.makeRemoteRequest(false)
    };
 
    loadingTopCompeleted = () =>{}
 
-   updatePost = (post) =>{
-     data = this.state.data
-     for (var i = 0; i < data.length; i++) {
-       if(data[i].uuid === post.uuid){
-         data[i] = post;
-         break;
-       }
-     }
-     this.setState({data})
-   }
+
 
    renderFooter = () => {
        if (!this.state.loading) return null;
@@ -133,7 +129,7 @@ class AbstractSearchPage extends AbstractPostIncludedPage{
               <TextInput underlineColorAndroid='transparent' placeholderTextColor='gray'
                 placeholder={this.props.searchText} style={{flex:1, height: 45}}
                 onChangeText={(text)=>{this.setState({search_query: text, next_page: -1, no_results: false})}}/>
-              <Button light  onPress={()=>{this.setState({data:[]}, this.makeRemoteRequest)}}>
+              <Button light  onPress={()=>{this.setState({data:[]},()=> this.makeRemoteRequest(true))}}>
                 <Icon  style={{padding: 6}} name='search' />
               </Button>
 
@@ -141,7 +137,8 @@ class AbstractSearchPage extends AbstractPostIncludedPage{
           </Card>
 
 
-          <FlatList data={this.state.data}
+          <FlatList 
+            data={this.props.data}
             keyExtractor={this.props.keyExtractor}
             refreshing = {this.state.refreshing}
             onRefresh={this.handleRefresh}
@@ -156,7 +153,7 @@ class AbstractSearchPage extends AbstractPostIncludedPage{
             renderItem={({item}) =>{
               item.openPostDetail = this.openPostDetail;
               item.current_location = this.state.current_location;
-
+              item.openProfilePage = this.props.openProfilePage;
               return this.props.renderItem(item);
             }}/>
         </View>
@@ -165,16 +162,3 @@ class AbstractSearchPage extends AbstractPostIncludedPage{
     }
 
 }
-
-
-function mapStateToProps(state){
-  return{
-
-  };
-}
-
-function matchDispatchToProps(dispatch){
-  return bindActionCreators({}, dispatch)
-}
-
-export default connect(mapStateToProps, matchDispatchToProps)(AbstractSearchPage);

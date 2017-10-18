@@ -5,12 +5,11 @@ import {FlatList, StyleSheet, Dimensions, Image, View, Text,
 import {bindActionCreators} from 'redux';
 import { Card ,  Thumbnail, Button, Header, Title, Toast} from 'native-base';
 import { Icon, Rating } from 'react-native-elements';
-import {countText, EnglishNumberToPersianPrice} from '../utility/NumberUtils.js';
 import {phonecall} from 'react-native-communications'
 import ImagePicker from 'react-native-image-crop-picker';
 import SInfo from 'react-native-sensitive-info';
 import {userDetail, userPosts, updateProfilePhoto, followUser} from '../requestServer.js';
-import {EnglighNumberToPersian} from '../utility/NumberUtils.js';
+import {EnglighNumberToPersian, countText, EnglishNumberToPersianPrice} from '../utility/NumberUtils.js';
 import {initProfilePost, loadMoreProfilePost, updateProfilePost} from '../actions/profilePostActions.js';
 import {user_posts} from '../serverAddress.js'
 
@@ -109,7 +108,7 @@ _updateProfilePhoto = (image) =>{
     onSuccess = (res) =>{
       this.setState((prevState)=>{
         user = prevState.user;
-        user.profile.avatar_url = res.avatar_url;
+        user.avatar_url = res.avatar_url;
         return {user}
       })
     }
@@ -171,6 +170,10 @@ _updateProfilePhoto = (image) =>{
    this.props.navigation.navigate('PostDetailPage', {token: this.state.token, profilePost, user:this.state.user})
  }
 
+ openFollowPage = (is_followers)=>{
+  this.props.navigation.navigate('FollowUsers', {username: this.state.username, is_followers})
+ }
+
  render(){
    return(
      <View style={{flex:1, backgroundColor:'#BDBDBD'}}>
@@ -182,7 +185,7 @@ _updateProfilePhoto = (image) =>{
        <View style={{width: 40}}/>
        <View style= {{flexDirection:'column',alignItems: 'center',justifyContent: 'center' ,flex:1}}>
           {this.state.user &&
-            <Title style={{ color: 'black', fontWeight:'bold'}}>{this.state.user.profile.full_name}</Title>
+            <Title style={{ color: 'black', fontWeight:'bold'}}>{this.state.user.full_name}</Title>
           }
        </View>
        <View style={{width: 40, justifyContent:'center'}}>
@@ -197,14 +200,20 @@ _updateProfilePhoto = (image) =>{
               <View style={{flexDirection:'row'}}>
                 <View style={{flex:1}}>
                   <View style={{flex:1,flexDirection:'row',justifyContent:'center',alignItems:'stretch'}}>
-                    <View style={{flex:1,margin:1, justifyContent:'center', alignItems:'center'}}>
-                      <Text textSize={15} fontWeight='bold' style={styles.countText}>{countText(this.state.user.follow.n_followers)}</Text>
-                      <Text>مورد دیده شدن</Text>
-                    </View>
-                    <View style={{flex:1,margin:1, justifyContent:'center', alignItems:'center'}}>
-                      <Text textSize={15} fontWeight='bold' style={styles.countText}>{countText(this.state.user.follow.n_followings)}</Text>
-                      <Text>دیده کردن</Text>
-                    </View>
+                    <TouchableWithoutFeedback onPress={()=>{this.openFollowPage(true)}}>
+                      <View style={{flex:1,margin:1, justifyContent:'center', alignItems:'center'}}>
+                        <Text textSize={15} fontWeight='bold' style={styles.countText}>{countText(this.state.user.follow.n_followers)}</Text>
+                        <Text>مورد دیده شدن</Text>
+                      </View>
+                    </TouchableWithoutFeedback>
+                    <TouchableWithoutFeedback onPress={()=>{this.openFollowPage(false)}}>
+                      <View style={{flex:1,margin:1, justifyContent:'center', alignItems:'center'}}>
+                        <Text textSize={15} fontWeight='bold' style={styles.countText}>{countText(this.state.user.follow.n_followings)}</Text>
+                        <Text>دیده کردن</Text>
+                      </View>
+                    </TouchableWithoutFeedback>
+                   
+                 
                   </View>
 
                 </View>
@@ -218,7 +227,7 @@ _updateProfilePhoto = (image) =>{
                     this._updateProfilePhoto(image)
                   }).catch(error => {});
                 }}>
-                  <Thumbnail large source={{uri: this.state.user.profile.avatar_url}}/>
+                  <Thumbnail large source={{uri: this.state.user.avatar_url}}/>
                 </TouchableWithoutFeedback>
 
               </View>
@@ -251,13 +260,13 @@ _updateProfilePhoto = (image) =>{
                <Button style={{margin:2, backgroundColor:'white'}} onPress={()=>{this.props.navigation.navigate('ReviewPage', {token: this.state.token, username: this.state.username})}}>
                  <Text style={{color:'gray'}}>
                   <Text>(</Text>
-                  <Text>{EnglighNumberToPersian(this.state.user.profile.count_of_rates)}</Text>
+                  <Text>{countText(this.state.user.count_of_rates)}</Text>
                   <Text>)</Text>
                  </Text>
                  <Rating
                    imageSize={12}
                    readonly
-                   startingValue={this.state.user.profile.score}
+                   startingValue={this.state.user.score}
                    style = {{margin: 3}}
                    />
                </Button>
